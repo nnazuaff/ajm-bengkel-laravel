@@ -18,7 +18,7 @@ class SparepartResource extends Resource
 {
     protected static ?string $model = Sparepart::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-cube';
+    protected static $navigationIcon = 'heroicon-o-cube';
 
 
 
