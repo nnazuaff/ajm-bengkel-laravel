@@ -20,7 +20,7 @@ class WorkOrderResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
-    protected static ?string $navigationGroup = 'Operations';
+    protected static string|BackedEnum|null $navigationGroup = 'Operations';
 
     protected static ?int $navigationSort = 1;
 

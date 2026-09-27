@@ -20,7 +20,7 @@ class CustomerResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
-    protected static ?string $navigationGroup = 'Master Data';
+    protected static string|BackedEnum|null $navigationGroup = 'Master Data';
 
     protected static ?int $navigationSort = 2;
 

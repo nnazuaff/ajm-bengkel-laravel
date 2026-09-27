@@ -20,6 +20,10 @@ class WorkOrderItemResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
+    protected static string|BackedEnum|null $navigationGroup = 'Operations';
+
+    protected static ?int $navigationSort = 3;
+
     public static function form(Schema $schema): Schema
     {
         return WorkOrderItemForm::configure($schema);
