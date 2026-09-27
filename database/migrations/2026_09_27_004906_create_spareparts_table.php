@@ -13,6 +13,12 @@ return new class extends Migration
     {
         Schema::create('spareparts', function (Blueprint $table) {
             $table->id();
+            $table->string('name');
+            $table->string('sku', 100)->unique();
+            $table->string('category', 100);
+            $table->integer('stock')->default(0);
+            $table->integer('min_stock')->default(5);
+            $table->decimal('unit_price', 10, 2);
             $table->timestamps();
         });
     }

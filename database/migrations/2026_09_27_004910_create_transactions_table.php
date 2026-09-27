@@ -13,6 +13,11 @@ return new class extends Migration
     {
         Schema::create('transactions', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('work_order_id')->nullable()->constrained()->nullOnDelete();
+            $table->enum('type', ['income', 'expense']);
+            $table->decimal('amount', 10, 2);
+            $table->text('description');
+            $table->date('transaction_date');
             $table->timestamps();
         });
     }

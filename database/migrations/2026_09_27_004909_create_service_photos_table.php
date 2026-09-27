@@ -13,6 +13,10 @@ return new class extends Migration
     {
         Schema::create('service_photos', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('work_order_item_id')->constrained()->cascadeOnDelete();
+            $table->string('photo_path', 500);
+            $table->text('description')->nullable();
+            $table->timestamp('uploaded_at')->useCurrent();
             $table->timestamps();
         });
     }
