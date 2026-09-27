@@ -20,11 +20,8 @@ class WorkOrderItemResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-list-bullet';
 
-    protected static ?string $navigationLabel = 'Work Order Items';
 
-    protected static ?string $navigationGroup = 'Operations';
 
-    protected static ?int $navigationSort = 2;
 
 
 

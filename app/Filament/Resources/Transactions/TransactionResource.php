@@ -20,11 +20,8 @@ class TransactionResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-currency-dollar';
 
-    protected static ?string $navigationLabel = 'Transactions';
 
-    protected static ?string $navigationGroup = 'Finance';
 
-    protected static ?int $navigationSort = 1;
 
 
 

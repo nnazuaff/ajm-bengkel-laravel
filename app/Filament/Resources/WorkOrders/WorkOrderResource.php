@@ -20,11 +20,8 @@ class WorkOrderResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-wrench-screwdriver';
 
-    protected static ?string $navigationLabel = 'Work Orders';
 
-    protected static ?string $navigationGroup = 'Operations';
 
-    protected static ?int $navigationSort = 1;
 
 
 

@@ -20,11 +20,8 @@ class ServicePhotoResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-camera';
 
-    protected static ?string $navigationLabel = 'Service Photos';
 
-    protected static ?string $navigationGroup = 'Operations';
 
-    protected static ?int $navigationSort = 3;
 
 
 

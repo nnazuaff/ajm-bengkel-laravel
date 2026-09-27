@@ -20,11 +20,8 @@ class SparepartResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-cube';
 
-    protected static ?string $navigationLabel = 'Spareparts';
 
-    protected static ?string $navigationGroup = 'Master Data';
 
-    protected static ?int $navigationSort = 1;
 
 
 
