@@ -37,6 +37,10 @@ class AdminPanelProvider extends PanelProvider
             ->brandLogoHeight('2rem')
             ->favicon(asset('images/favicon.png'))
             ->sidebarCollapsibleOnDesktop()
+            ->renderHook(
+                'panels::user-menu.before',
+                fn () => view('livewire.language-switcher')
+            )
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
             ->pages([
