@@ -18,7 +18,6 @@ class ServicePhotoResource extends Resource
 {
     protected static ?string $model = ServicePhoto::class;
 
-    protected static $navigationIcon = 'heroicon-o-camera';
 
 
 

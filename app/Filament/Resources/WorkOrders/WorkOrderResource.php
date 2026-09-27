@@ -18,7 +18,6 @@ class WorkOrderResource extends Resource
 {
     protected static ?string $model = WorkOrder::class;
 
-    protected static $navigationIcon = 'heroicon-o-wrench-screwdriver';
 
 
 

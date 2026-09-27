@@ -18,7 +18,6 @@ class TransactionResource extends Resource
 {
     protected static ?string $model = Transaction::class;
 
-    protected static $navigationIcon = 'heroicon-o-currency-dollar';
 
 
 

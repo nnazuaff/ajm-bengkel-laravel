@@ -18,7 +18,6 @@ class AuditLogResource extends Resource
 {
     protected static ?string $model = AuditLog::class;
 
-    protected static $navigationIcon = 'heroicon-o-clock';
 
 
 
