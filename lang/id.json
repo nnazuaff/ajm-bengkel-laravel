@@ -1,0 +1,25 @@
+{
+    "Revenue (This Month)": "Pendapatan (Bulan Ini)",
+    "Income from completed work orders": "Dari work order selesai",
+    "Active Work Orders": "Work Order Aktif",
+    "Pending & In Progress": "Pending & Dalam Proses",
+    "Completed (This Month)": "Selesai (Bulan Ini)",
+    "Work orders finished": "Work order diselesaikan",
+    "Low Stock Alert": "Peringatan Stok Rendah",
+    "Spareparts below minimum": "Sparepart di bawah minimum",
+    
+    "Dashboard": "Dasbor",
+    "Customers": "Pelanggan",
+    "Vehicles": "Kendaraan",
+    "Spareparts": "Suku Cadang",
+    "Work Orders": "Order Servis",
+    "Work Order Items": "Item Order",
+    "Service Photos": "Foto Servis",
+    "Transactions": "Transaksi",
+    "Audit Logs": "Log Audit",
+    
+    "Master Data": "Data Master",
+    "Operations": "Operasional",
+    "Finance": "Keuangan",
+    "System": "Sistem"
+}
