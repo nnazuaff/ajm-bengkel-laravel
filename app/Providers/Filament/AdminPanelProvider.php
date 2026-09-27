@@ -43,11 +43,6 @@ class AdminPanelProvider extends PanelProvider
                 'Finance',
                 'System',
             ])
-            ->locales([
-                'en' => 'English',
-                'id' => 'Bahasa Indonesia',
-            ])
-            ->defaultLocale('id')
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
             ->pages([
