@@ -2,6 +2,13 @@
 
 namespace App\Providers;
 
+use App\Models\Customer;
+use App\Models\Sparepart;
+use App\Models\Transaction;
+use App\Models\Vehicle;
+use App\Models\WorkOrder;
+use App\Models\WorkOrderItem;
+use App\Observers\AuditObserver;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -20,11 +27,11 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         // Register Audit Observer for all auditable models
-        \App\Models\Sparepart::observe(\App\Observers\AuditObserver::class);
-        \App\Models\Customer::observe(\App\Observers\AuditObserver::class);
-        \App\Models\Vehicle::observe(\App\Observers\AuditObserver::class);
-        \App\Models\WorkOrder::observe(\App\Observers\AuditObserver::class);
-        \App\Models\WorkOrderItem::observe(\App\Observers\AuditObserver::class);
-        \App\Models\Transaction::observe(\App\Observers\AuditObserver::class);
+        Sparepart::observe(AuditObserver::class);
+        Customer::observe(AuditObserver::class);
+        Vehicle::observe(AuditObserver::class);
+        WorkOrder::observe(AuditObserver::class);
+        WorkOrderItem::observe(AuditObserver::class);
+        Transaction::observe(AuditObserver::class);
     }
 }
