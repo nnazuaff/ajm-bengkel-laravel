@@ -14,28 +14,38 @@ class WorkOrderItemsTable
     {
         return $table
             ->columns([
-                TextColumn::make('work_order_id')
-                    ->numeric()
+                TextColumn::make('workOrder.vehicle.license_plate')
+                    ->label('Work Order')
+                    ->translateLabel()
+                    ->searchable()
                     ->sortable(),
-                TextColumn::make('sparepart_id')
-                    ->numeric()
+                TextColumn::make('sparepart.name')
+                    ->label('Sparepart')
+                    ->translateLabel()
+                    ->searchable()
                     ->sortable(),
                 TextColumn::make('service_name')
+                    ->translateLabel()
                     ->searchable(),
                 TextColumn::make('quantity')
+                    ->translateLabel()
                     ->numeric()
                     ->sortable(),
                 TextColumn::make('unit_price')
+                    ->translateLabel()
                     ->money()
                     ->sortable(),
                 TextColumn::make('subtotal')
+                    ->translateLabel()
                     ->numeric()
                     ->sortable(),
                 TextColumn::make('created_at')
+                    ->translateLabel()
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('updated_at')
+                    ->translateLabel()
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),

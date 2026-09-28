@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Transactions;
 
+use App\Filament\Resources\Concerns\HasDynamicNavigation;
 use App\Filament\Resources\Transactions\Pages\CreateTransaction;
 use App\Filament\Resources\Transactions\Pages\EditTransaction;
 use App\Filament\Resources\Transactions\Pages\ListTransactions;
@@ -13,16 +14,34 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use UnitEnum;
 
 class TransactionResource extends Resource
 {
+    use HasDynamicNavigation;
+
     protected static ?string $model = Transaction::class;
 
+    protected static string|UnitEnum|null $navigationGroup = 'finance';
 
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBanknotes;
 
+    protected static ?int $navigationSort = 10;
 
+    public static function getNavigationLabel(): string
+    {
+        return __('Transactions');
+    }
 
+    public static function getModelLabel(): string
+    {
+        return __('Transaction');
+    }
 
+    public static function getPluralModelLabel(): string
+    {
+        return __('Transactions');
+    }
 
     public static function form(Schema $schema): Schema
     {
@@ -36,9 +55,7 @@ class TransactionResource extends Resource
 
     public static function getRelations(): array
     {
-        return [
-            //
-        ];
+        return [];
     }
 
     public static function getPages(): array

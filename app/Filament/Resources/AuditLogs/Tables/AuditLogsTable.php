@@ -18,16 +18,22 @@ class AuditLogsTable
         return $table
             ->columns([
                 TextColumn::make('user_id')
+                    ->translateLabel()
                     ->numeric()
                     ->sortable(),
                 TextColumn::make('table_name')
+                    ->translateLabel()
                     ->searchable(),
                 TextColumn::make('row_id')
+                    ->translateLabel()
                     ->numeric()
                     ->sortable(),
                 TextColumn::make('action')
+                    ->translateLabel()
+                    ->formatStateUsing(fn ($state): string => __(ucfirst((string) $state)))
                     ->badge(),
                 TextColumn::make('created_at')
+                    ->translateLabel()
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -37,26 +43,26 @@ class AuditLogsTable
             ])
             ->recordActions([
                 Action::make('rollback')
-                    ->label('Rollback')
+                    ->label(fn (): string => __('Rollback'))
                     ->icon('heroicon-o-arrow-uturn-left')
                     ->color('warning')
                     ->requiresConfirmation()
-                    ->modalDescription('Akan mengembalikan data ke kondisi sebelumnya. Aksi ini tidak bisa di-undo.')
+                    ->modalDescription(fn (): string => __('This will restore the data to its previous state. This action cannot be undone.'))
                     ->visible(fn ($record) => app(AuditRollbackService::class)->canRollback($record))
                     ->action(function ($record) {
                         $service = app(AuditRollbackService::class);
-                        
+
                         if ($service->rollback($record)) {
                             Notification::make()
                                 ->success()
-                                ->title('Rollback berhasil')
-                                ->body('Data berhasil dikembalikan ke kondisi sebelumnya.')
+                                ->title(__('Rollback successful'))
+                                ->body(__('The data was restored to its previous state.'))
                                 ->send();
                         } else {
                             Notification::make()
                                 ->danger()
-                                ->title('Rollback gagal')
-                                ->body('Terjadi kesalahan saat rollback.')
+                                ->title(__('Rollback failed'))
+                                ->body(__('An error occurred while rolling back the data.'))
                                 ->send();
                         }
                     }),

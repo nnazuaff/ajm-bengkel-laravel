@@ -13,18 +13,28 @@ class AuditLogForm
         return $schema
             ->components([
                 TextInput::make('user_id')
+                    ->translateLabel()
                     ->required()
                     ->numeric(),
                 TextInput::make('table_name')
+                    ->translateLabel()
                     ->required(),
                 TextInput::make('row_id')
+                    ->translateLabel()
                     ->required()
                     ->numeric(),
                 Select::make('action')
-                    ->options(['create' => 'Create', 'update' => 'Update', 'delete' => 'Delete'])
+                    ->translateLabel()
+                    ->options(fn (): array => [
+                        'create' => __('Create'),
+                        'update' => __('Update'),
+                        'delete' => __('Delete'),
+                    ])
                     ->required(),
-                TextInput::make('old_values'),
-                TextInput::make('new_values'),
+                TextInput::make('old_values')
+                    ->translateLabel(),
+                TextInput::make('new_values')
+                    ->translateLabel(),
             ]);
     }
 }

@@ -12,15 +12,20 @@ class VehicleForm
         return $schema
             ->components([
                 TextInput::make('customer_id')
+                    ->translateLabel()
                     ->required()
                     ->numeric(),
                 TextInput::make('license_plate')
+                    ->translateLabel()
                     ->required(),
                 TextInput::make('brand')
+                    ->translateLabel()
                     ->required(),
                 TextInput::make('model')
+                    ->translateLabel()
                     ->required(),
                 TextInput::make('year')
+                    ->translateLabel()
                     ->required(),
             ]);
     }

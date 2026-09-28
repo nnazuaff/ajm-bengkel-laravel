@@ -15,20 +15,27 @@ class VehiclesTable
         return $table
             ->columns([
                 TextColumn::make('customer_id')
+                    ->translateLabel()
                     ->numeric()
                     ->sortable(),
                 TextColumn::make('license_plate')
+                    ->translateLabel()
                     ->searchable(),
                 TextColumn::make('brand')
+                    ->translateLabel()
                     ->searchable(),
                 TextColumn::make('model')
+                    ->translateLabel()
                     ->searchable(),
-                TextColumn::make('year'),
+                TextColumn::make('year')
+                    ->translateLabel(),
                 TextColumn::make('created_at')
+                    ->translateLabel()
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('updated_at')
+                    ->translateLabel()
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),

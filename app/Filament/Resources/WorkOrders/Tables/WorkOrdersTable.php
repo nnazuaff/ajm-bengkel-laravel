@@ -14,28 +14,41 @@ class WorkOrdersTable
     {
         return $table
             ->columns([
-                TextColumn::make('vehicle_id')
-                    ->numeric()
+                TextColumn::make('vehicle.license_plate')
+                    ->label('License plate')
+                    ->translateLabel()
+                    ->searchable()
                     ->sortable(),
-                TextColumn::make('mechanic_id')
-                    ->numeric()
+                TextColumn::make('mechanic.name')
+                    ->label('Mechanic')
+                    ->translateLabel()
+                    ->searchable()
                     ->sortable(),
                 TextColumn::make('status')
+                    ->translateLabel()
+                    ->formatStateUsing(fn ($state): string => __(
+                        $state === 'in_progress' ? 'In progress' : ucfirst((string) $state),
+                    ))
                     ->badge(),
                 TextColumn::make('total_cost')
+                    ->translateLabel()
                     ->money()
                     ->sortable(),
                 TextColumn::make('started_at')
+                    ->translateLabel()
                     ->dateTime()
                     ->sortable(),
                 TextColumn::make('completed_at')
+                    ->translateLabel()
                     ->dateTime()
                     ->sortable(),
                 TextColumn::make('created_at')
+                    ->translateLabel()
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('updated_at')
+                    ->translateLabel()
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),

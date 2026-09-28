@@ -15,26 +15,34 @@ class SparepartsTable
         return $table
             ->columns([
                 TextColumn::make('name')
+                    ->translateLabel()
                     ->searchable(),
                 TextColumn::make('sku')
                     ->label('SKU')
+                    ->translateLabel()
                     ->searchable(),
                 TextColumn::make('category')
+                    ->translateLabel()
                     ->searchable(),
                 TextColumn::make('stock')
+                    ->translateLabel()
                     ->numeric()
                     ->sortable(),
                 TextColumn::make('min_stock')
+                    ->translateLabel()
                     ->numeric()
                     ->sortable(),
                 TextColumn::make('unit_price')
+                    ->translateLabel()
                     ->money()
                     ->sortable(),
                 TextColumn::make('created_at')
+                    ->translateLabel()
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('updated_at')
+                    ->translateLabel()
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
