@@ -2,7 +2,6 @@
 
 namespace App\Livewire;
 
-use Illuminate\Support\Facades\Session;
 use Livewire\Component;
 
 class LanguageSwitcher extends Component
@@ -19,17 +18,15 @@ class LanguageSwitcher extends Component
         $this->currentLocale = app()->getLocale();
     }
 
-    public function switchLocale(string $locale): void
+    public function switchLocale($locale): void
     {
         if (array_key_exists($locale, $this->locales)) {
-            Session::put('locale', $locale);
+            session()->put('locale', $locale);
             app()->setLocale($locale);
             $this->currentLocale = $locale;
-            
-            $this->dispatch('localeChanged', locale: $locale);
-            
-            // Refresh halaman untuk apply perubahan
-            $this->redirect(request()->header('Referer') ?: '/admin');
+
+            // Force refresh via window.location for absolute locale change
+            $this->js('window.location.reload()');
         }
     }
 
