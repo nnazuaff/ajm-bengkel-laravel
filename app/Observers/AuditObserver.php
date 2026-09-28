@@ -19,7 +19,7 @@ class AuditObserver
 
     public function created(Model $model): void
     {
-        if (!$this->shouldAudit($model)) {
+        if (! $this->shouldAudit($model)) {
             return;
         }
 
@@ -35,7 +35,7 @@ class AuditObserver
 
     public function updated(Model $model): void
     {
-        if (!$this->shouldAudit($model)) {
+        if (! $this->shouldAudit($model)) {
             return;
         }
 
@@ -51,7 +51,7 @@ class AuditObserver
 
     public function deleted(Model $model): void
     {
-        if (!$this->shouldAudit($model)) {
+        if (! $this->shouldAudit($model)) {
             return;
         }
 

@@ -47,15 +47,17 @@ class AuditRollbackService
                 'new_values' => array_merge(
                     $auditLog->new_values ?? [],
                     ['_rolled_back_at' => now()->toIso8601String()]
-                )
+                ),
             ]);
 
             DB::commit();
+
             return true;
 
         } catch (\Exception $e) {
             DB::rollBack();
-            \Log::error('Audit rollback failed: ' . $e->getMessage());
+            \Log::error('Audit rollback failed: '.$e->getMessage());
+
             return false;
         }
     }
@@ -78,7 +80,7 @@ class AuditRollbackService
 
             // For updates, record must exist
             // For deletes, record must NOT exist (otherwise already restored)
-            if ($auditLog->action === 'update' && !$exists) {
+            if ($auditLog->action === 'update' && ! $exists) {
                 return false;
             }
             if ($auditLog->action === 'delete' && $exists) {
