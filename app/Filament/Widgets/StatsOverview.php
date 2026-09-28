@@ -2,7 +2,6 @@
 
 namespace App\Filament\Widgets;
 
-use App\Models\Customer;
 use App\Models\Sparepart;
 use App\Models\Transaction;
 use App\Models\WorkOrder;
@@ -26,7 +25,7 @@ class StatsOverview extends StatsOverviewWidget
         $lowStockItems = Sparepart::whereColumn('stock', '<', 'min_stock')->count();
 
         return [
-            Stat::make(__('Revenue (This Month)'), 'Rp ' . number_format($totalRevenue, 0, ',', '.'))
+            Stat::make(__('Revenue (This Month)'), 'Rp '.number_format($totalRevenue, 0, ',', '.'))
                 ->description(__('Income from completed work orders'))
                 ->descriptionIcon('heroicon-m-arrow-trending-up')
                 ->color('success')
