@@ -2,16 +2,18 @@
 
 namespace App\Providers\Filament;
 
+use App\Http\Middleware\SetLocale;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use Filament\Navigation\NavigationGroup;
 use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
+use Filament\Support\Icons\Heroicon;
 use Filament\Widgets\AccountWidget;
-use Filament\Widgets\FilamentInfoWidget;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
@@ -28,8 +30,9 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
+            ->databaseTransactions()
             ->colors([
-                'primary' => Color::Blue,
+                'primary' => Color::Red,
                 'gray' => Color::Slate,
             ])
             ->brandName('AJM Bengkel')
@@ -37,9 +40,19 @@ class AdminPanelProvider extends PanelProvider
             ->brandLogoHeight('2rem')
             ->favicon(asset('images/favicon.png'))
             ->sidebarCollapsibleOnDesktop()
+            ->navigationGroups([
+                'master_data' => NavigationGroup::make(fn (): string => __('Master Data'))
+                    ->icon(Heroicon::OutlinedCircleStack),
+                'operations' => NavigationGroup::make(fn (): string => __('Operations'))
+                    ->icon(Heroicon::OutlinedWrenchScrewdriver),
+                'finance' => NavigationGroup::make(fn (): string => __('Finance'))
+                    ->icon(Heroicon::OutlinedBanknotes),
+                'system' => NavigationGroup::make(fn (): string => __('System'))
+                    ->icon(Heroicon::OutlinedCog6Tooth),
+            ])
             ->renderHook(
                 'panels::user-menu.before',
-                fn () => \Livewire\Livewire::mount('language-switcher')
+                fn () => view('filament.language-switcher')
             )
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
@@ -54,6 +67,7 @@ class AdminPanelProvider extends PanelProvider
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
                 StartSession::class,
+                SetLocale::class,
                 AuthenticateSession::class,
                 ShareErrorsFromSession::class,
                 PreventRequestForgery::class,
