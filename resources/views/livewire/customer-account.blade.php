@@ -1,5 +1,5 @@
 <div>
-    <flux:modal name="customer-account" wire:model="showForm"
+    <flux:modal :closable="false" name="customer-account" wire:model="showForm"
         class="w-[calc(100%-2rem)] max-w-2xl max-h-[calc(100dvh-2rem)] overflow-y-auto"
         aria-labelledby="customer-account-heading">
         @if ($showForm)

@@ -1,5 +1,5 @@
 <div>
-    <flux:modal name="customer-editor" wire:model="showForm" class="w-[calc(100%-2rem)] max-w-3xl max-h-[calc(100dvh-2rem)] overflow-y-auto" aria-labelledby="customer-editor-heading">
+    <flux:modal :closable="false" name="customer-editor" wire:model="showForm" class="w-[calc(100%-2rem)] max-w-3xl max-h-[calc(100dvh-2rem)] overflow-y-auto" aria-labelledby="customer-editor-heading">
     @if ($showForm)
         <form wire:submit="save" class="space-y-5" aria-labelledby="customer-editor-heading" x-init="$nextTick(() => $el.querySelector('input, select')?.focus())">
             <flux:heading size="lg" level="2" id="customer-editor-heading">{{ $editingId ? 'Edit pelanggan' : 'Tambah pelanggan' }}</flux:heading>

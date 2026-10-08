@@ -1,5 +1,5 @@
 <div>
-    <flux:modal name="walk-in-intake" wire:model="showIntake" class="w-[calc(100%-2rem)] max-w-3xl max-h-[calc(100dvh-2rem)] overflow-y-auto" aria-labelledby="intake-heading">
+    <flux:modal :closable="false" name="walk-in-intake" wire:model="showIntake" class="w-[calc(100%-2rem)] max-w-3xl max-h-[calc(100dvh-2rem)] overflow-y-auto" aria-labelledby="intake-heading">
         @if ($showIntake)
         <form wire:submit="receiveWalkIn" class="space-y-5" aria-labelledby="intake-heading">
             <div class="flex flex-wrap items-center justify-between gap-3">

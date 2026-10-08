@@ -25,6 +25,7 @@ it('opens a lazy review and clears it on dismissal', function () {
     Livewire::actingAs(User::factory()->create(['role' => Role::Admin]))->test(BookingReview::class)
         ->assertDontSee('Keluhan pelanggan')->dispatch('open-booking-review', id: $booking->id)
         ->assertSet('showForm', true)->assertSee('Keluhan pelanggan')
+        ->assertSeeHtml('wire:click="closeBooking"')->assertDontSeeHtml('data-flux-modal-close')
         ->set('detail.admin_notes', 'Unsaved')->set('showForm', false)
         ->assertSet('selectedBookingId', null)->assertSet('detail.admin_notes', '')
         ->assertDispatched('booking-review-closed', id: $booking->id);

@@ -1,5 +1,5 @@
 <div>
-    <flux:modal name="inventory-stock" wire:model="showForm" class="w-[calc(100%-2rem)] max-w-2xl max-h-[calc(100dvh-2rem)] overflow-y-auto" aria-labelledby="stock-form-heading">
+    <flux:modal :closable="false" name="inventory-stock" wire:model="showForm" class="w-[calc(100%-2rem)] max-w-2xl max-h-[calc(100dvh-2rem)] overflow-y-auto" aria-labelledby="stock-form-heading">
     @if($stockItem)
         <form wire:submit="saveStock" class="space-y-5" aria-labelledby="stock-form-heading" x-init="$nextTick(() => $el.querySelector('input')?.focus())">
             <flux:heading level="2" id="stock-form-heading">{{ ($stockForm['type'] ?? '') === 'in' ? 'Restok' : 'Koreksi stok' }} · {{ $stockItem->name }}</flux:heading>

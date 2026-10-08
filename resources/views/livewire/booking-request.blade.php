@@ -1,5 +1,5 @@
 <div>
-    <flux:modal name="booking-request" wire:model="showForm" class="w-[calc(100%-2rem)] max-w-3xl max-h-[calc(100dvh-2rem)] overflow-y-auto" aria-labelledby="booking-form-heading">
+    <flux:modal :closable="false" name="booking-request" wire:model="showForm" class="w-[calc(100%-2rem)] max-w-3xl max-h-[calc(100dvh-2rem)] overflow-y-auto" aria-labelledby="booking-form-heading">
         @if($showForm)
             <form wire:submit="submit" class="space-y-5" aria-labelledby="booking-form-heading" x-init="$nextTick(() => $el.querySelector('input')?.focus())">
                 <flux:heading size="lg" level="2" id="booking-form-heading">Buat booking</flux:heading>

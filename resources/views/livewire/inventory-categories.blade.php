@@ -1,5 +1,5 @@
 <div>
-    <flux:modal name="inventory-categories" wire:model="showForm" class="w-[calc(100%-2rem)] max-w-2xl max-h-[calc(100dvh-2rem)] overflow-y-auto" aria-labelledby="inventory-categories-heading">
+    <flux:modal :closable="false" name="inventory-categories" wire:model="showForm" class="w-[calc(100%-2rem)] max-w-2xl max-h-[calc(100dvh-2rem)] overflow-y-auto" aria-labelledby="inventory-categories-heading">
         @if($showForm)
             <div class="space-y-5" x-init="$nextTick(() => $el.querySelector('input')?.focus())">
                 <flux:heading size="lg" level="2" id="inventory-categories-heading">Kelola kategori</flux:heading>

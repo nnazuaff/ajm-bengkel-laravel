@@ -1,5 +1,5 @@
 <div>
-    <flux:modal name="booking-review" wire:model="showForm"
+    <flux:modal name="booking-review" wire:model="showForm" :closable="false"
         class="w-[calc(100%-2rem)] max-w-3xl max-h-[calc(100dvh-2rem)] overflow-y-auto" aria-labelledby="detail-heading">
         @if ($showForm && $selectedBooking)
             <article class="space-y-5" wire:key="booking-detail-{{ $selectedBooking->id }}"

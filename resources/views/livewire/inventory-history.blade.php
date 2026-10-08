@@ -1,5 +1,5 @@
 <div>
-    <flux:modal name="inventory-history" wire:model="showForm" class="w-[calc(100%-2rem)] max-w-5xl max-h-[calc(100dvh-2rem)] overflow-y-auto" aria-labelledby="stock-history-heading">
+    <flux:modal :closable="false" name="inventory-history" wire:model="showForm" class="w-[calc(100%-2rem)] max-w-5xl max-h-[calc(100dvh-2rem)] overflow-y-auto" aria-labelledby="stock-history-heading">
     @if($historyItem)
         <section class="space-y-4" aria-labelledby="stock-history-heading" x-init="$nextTick(() => $el.querySelector('button')?.focus())">
             <header class="flex items-center justify-between gap-3"><flux:heading level="2" id="stock-history-heading">Riwayat · {{ $historyItem->name }}</flux:heading><flux:button size="sm" wire:click="closeHistory">Tutup riwayat</flux:button></header>
