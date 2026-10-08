@@ -49,6 +49,10 @@ new #[Title('Profile settings')] class extends Component {
      */
     public function resendVerificationNotification(): void
     {
+        if (! config('fortify.require_email_verification')) {
+            return;
+        }
+
         $user = Auth::user();
 
         if ($user->hasVerifiedEmail()) {
@@ -65,14 +69,15 @@ new #[Title('Profile settings')] class extends Component {
     #[Computed]
     public function hasUnverifiedEmail(): bool
     {
-        return Auth::user() instanceof MustVerifyEmail && ! Auth::user()->hasVerifiedEmail();
+        return config('fortify.require_email_verification')
+            && Auth::user() instanceof MustVerifyEmail && ! Auth::user()->hasVerifiedEmail();
     }
 
     #[Computed]
     public function showDeleteUser(): bool
     {
-        return ! Auth::user() instanceof MustVerifyEmail
-            || (Auth::user() instanceof MustVerifyEmail && Auth::user()->hasVerifiedEmail());
+        return Auth::user()->role === \App\Enums\Role::Customer
+            && Auth::user()->canUseCustomerAccess();
     }
 }; ?>
 
