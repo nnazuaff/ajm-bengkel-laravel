@@ -56,9 +56,16 @@ test('user can delete their account', function () {
         ->assertHasNoErrors()
         ->assertRedirect('/');
 
-    expect($user->fresh())->toBeNull();
+    $this->assertSoftDeleted('users', ['id' => $user->id]);
     expect(auth()->check())->toBeFalse();
 });
+
+test('staff cannot bypass owner protection through self account deletion', function (string $role) {
+    $user = User::factory()->create(['role' => $role]);
+    Livewire::actingAs($user)->test('pages::settings.delete-user-modal')
+        ->set('password', 'password')->call('deleteUser')->assertForbidden();
+    $this->assertNotSoftDeleted('users', ['id' => $user->id]);
+})->with(['owner', 'admin', 'mechanic']);
 
 test('correct password must be provided to delete account', function () {
     $user = User::factory()->create();
