@@ -12,42 +12,49 @@
                 <flux:sidebar.toggle class="lg:hidden" icon="x-mark" :aria-label="__('Tutup navigasi')" />
             </flux:sidebar.header>
 
-            <flux:sidebar.nav :aria-label="__('Navigasi utama')">
-                <flux:sidebar.group :heading="auth()->user()->role->value === 'customer' ? __('Akun pelanggan') : __('Operasional bengkel')" class="grid">
-                    <flux:sidebar.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard', 'portal')" wire:navigate>
-                        {{ __('Dashboard') }}
-                    </flux:sidebar.item>
-
-                    @can('customer-portal')
+            <flux:sidebar.nav :aria-label="__('Navigasi utama')" class="gap-4 [&_[data-flux-sidebar-group]>div:first-child]:text-xs [&_[data-flux-sidebar-group]>div:first-child]:tracking-wide [&_[data-flux-sidebar-group]>div:first-child]:text-zinc-500 dark:[&_[data-flux-sidebar-group]>div:first-child]:text-zinc-400">
+                @can('customer-portal')
+                    <flux:sidebar.group heading="Akun pelanggan" data-sidebar-section="customer">
+                        <flux:sidebar.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard', 'portal')" wire:navigate>Dashboard</flux:sidebar.item>
                         <flux:sidebar.item icon="calendar" :href="route('booking.mine')" :current="request()->routeIs('booking.mine')" wire:navigate>Booking saya</flux:sidebar.item>
-                    @endcan
+                    </flux:sidebar.group>
+                @else
+                    <flux:sidebar.group heading="Ringkasan" data-sidebar-section="summary">
+                        <flux:sidebar.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>Dashboard</flux:sidebar.item>
+                    </flux:sidebar.group>
+                @endcan
 
-                    @can('manage-workshop')
-                        <flux:sidebar.item icon="calendar" :href="route('bookings.index')" :current="request()->routeIs('bookings.*')" wire:navigate>Booking</flux:sidebar.item>
-                        <flux:sidebar.item icon="users" :href="route('customers.index')" :current="request()->routeIs('customers.*')" wire:navigate>
-                            {{ __('Pelanggan') }}
-                        </flux:sidebar.item>
-                        <flux:sidebar.item icon="truck" :href="route('vehicles.index')" :current="request()->routeIs('vehicles.*')" wire:navigate>
-                            {{ __('Kendaraan') }}
-                        </flux:sidebar.item>
-                        <flux:sidebar.item icon="archive-box" :href="route('inventory.index')" :current="request()->routeIs('inventory.*')" wire:navigate>Inventory</flux:sidebar.item>
+                @can('work-services')
+                    <flux:sidebar.group heading="Operasional" data-sidebar-section="operations">
+                        @can('manage-workshop')
+                            <flux:sidebar.item icon="calendar" :href="route('bookings.index')" :current="request()->routeIs('bookings.*')" wire:navigate>Booking</flux:sidebar.item>
+                        @endcan
+                        <flux:sidebar.item icon="wrench" :href="route('services.index')" :current="request()->routeIs('services.*')" wire:navigate>Servis</flux:sidebar.item>
+                        @can('manage-workshop')
+                            <flux:sidebar.item icon="clock" :href="route('history.index')" :current="request()->routeIs('history.*')" wire:navigate>Riwayat servis</flux:sidebar.item>
+                        @endcan
+                    </flux:sidebar.group>
+                @endcan
+
+                @can('manage-workshop')
+                    <flux:sidebar.group heading="Data bengkel" data-sidebar-section="masters">
+                        <flux:sidebar.item icon="users" :href="route('customers.index')" :current="request()->routeIs('customers.*')" wire:navigate>Pelanggan</flux:sidebar.item>
+                        <flux:sidebar.item icon="truck" :href="route('vehicles.index')" :current="request()->routeIs('vehicles.*')" wire:navigate>Kendaraan</flux:sidebar.item>
+                        <flux:sidebar.item icon="archive-box" :href="route('inventory.index')" :current="request()->routeIs('inventory.*')" wire:navigate>Inventori</flux:sidebar.item>
+                        <flux:sidebar.item icon="users" :href="route('mechanics.index')" :current="request()->routeIs('mechanics.*')" wire:navigate>Mekanik / staf</flux:sidebar.item>
+                    </flux:sidebar.group>
+                    <flux:sidebar.group heading="Keuangan" data-sidebar-section="finance">
                         <flux:sidebar.item icon="document-text" :href="route('receipts.index')" :current="request()->routeIs('receipts.*')" wire:navigate>Bon / penjualan</flux:sidebar.item>
                         <flux:sidebar.item icon="banknotes" :href="route('payments.index')" :current="request()->routeIs('payments.*')" wire:navigate>Pembayaran</flux:sidebar.item>
-                        <flux:sidebar.item icon="clock" :href="route('history.index')" :current="request()->routeIs('history.*')" wire:navigate>Riwayat servis</flux:sidebar.item>
-                        <flux:sidebar.item icon="users" :href="route('mechanics.index')" :current="request()->routeIs('mechanics.*')" wire:navigate>Mekanik / staf</flux:sidebar.item>
                         <flux:sidebar.item icon="chart-bar" :href="route('reports.index')" :current="request()->routeIs('reports.*')" wire:navigate>Laporan</flux:sidebar.item>
+                    </flux:sidebar.group>
+                    <flux:sidebar.group heading="Pengelolaan" data-sidebar-section="management">
                         <flux:sidebar.item icon="clipboard-document-list" :href="route('audit.index')" :current="request()->routeIs('audit.*')" wire:navigate>Audit log</flux:sidebar.item>
-                    @endcan
-                    @can('manage-users')
-                        <flux:sidebar.item icon="cog" :href="route('workshop-settings.edit')" :current="request()->routeIs('workshop-settings.*')" wire:navigate>Identitas bengkel</flux:sidebar.item>
-                    @endcan
-
-                    @can('work-services')
-                        <flux:sidebar.item icon="wrench" :href="route('services.index')" :current="request()->routeIs('services.*')" wire:navigate>
-                            {{ __('Servis') }}
-                        </flux:sidebar.item>
-                    @endcan
-                </flux:sidebar.group>
+                        @can('manage-users')
+                            <flux:sidebar.item icon="cog" :href="route('workshop-settings.edit')" :current="request()->routeIs('workshop-settings.*')" wire:navigate>Identitas bengkel</flux:sidebar.item>
+                        @endcan
+                    </flux:sidebar.group>
+                @endcan
             </flux:sidebar.nav>
 
             <flux:spacer />
@@ -57,7 +64,7 @@
 
         <flux:header class="border-b border-zinc-200 bg-white px-4 lg:hidden dark:border-zinc-800 dark:bg-zinc-900">
             <flux:sidebar.toggle icon="bars-2" inset="left" :aria-label="__('Buka navigasi')" />
-            <span class="ms-2 truncate text-sm font-semibold">{{ config('app.name') }}</span>
+            <x-app-logo class="ms-2" href="{{ route('dashboard') }}" wire:navigate />
             <flux:spacer />
 
             <flux:dropdown position="bottom" align="end">

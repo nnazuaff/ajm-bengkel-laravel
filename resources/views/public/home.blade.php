@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="Ajukan booking servis motor dan lihat riwayat pekerjaan melalui akun pelanggan.">
     <title>{{ $workshop->name }}</title>
+    @include('partials.favicon')
     @fonts
     @vite(['resources/css/app.css', 'resources/js/app.ts'])
     @fluxAppearance
@@ -13,10 +14,14 @@
     <a href="#main-content" class="workshop-skip-link">Langsung ke konten</a>
     <header class="border-b border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
         <nav aria-label="Navigasi utama" class="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-5 py-5 sm:px-8">
-            <a href="{{ route('home') }}" class="flex min-w-0 items-center gap-3 font-semibold">
-                @if ($logoUrl)<img src="{{ $logoUrl }}" alt="" width="44" height="44" class="h-11 w-11 object-contain">@endif
-                <span class="break-words">{{ $workshop->name }}</span>
-            </a>
+            @if ($workshop->horizontalLogoUrl())
+                <x-app-logo href="{{ route('home') }}" />
+            @else
+                <a href="{{ route('home') }}" class="flex min-w-0 items-center gap-3 font-semibold" data-workshop-brand>
+                    @if ($logoUrl)<img src="{{ $logoUrl }}" alt="" width="44" height="44" class="h-11 w-11 object-contain">@endif
+                    <span class="break-words">AJM Bengkel</span>
+                </a>
+            @endif
             <div class="flex flex-wrap items-center gap-5 text-sm">
                 <a href="#cara-booking">Cara booking</a>
                 @auth
