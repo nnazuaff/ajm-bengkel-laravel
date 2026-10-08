@@ -93,7 +93,7 @@ it('allows explicit staff linking of unverified accounts when disabled without r
 
     $panel = Livewire::actingAs($actor)->test(CustomerAccount::class, ['customerId' => $customer->id])
         ->assertSee($user->email)->assertDontSee($archived->email)->assertDontSee($mechanic->email)
-        ->assertDontSee($owned->email)->assertSee('Verifikasi email tidak diwajibkan')
+        ->assertDontSee($owned->email)->assertSee('Verifikasi email tidak')->assertSee('diwajibkan; verifikasi identitas dan kepemilikan tetap wajib.')
         ->assertDontSee('Akun pelanggan terverifikasi')->assertSet('userId', '')
         ->set('userId', (string) $user->id)->call('save')->assertHasErrors(['ownershipVerified']);
     expect($customer->fresh()->user_id)->toBeNull();

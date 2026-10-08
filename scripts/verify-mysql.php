@@ -63,11 +63,11 @@ try {
     runMigrations('migrate');
     check(Schema::hasTable('service_orders') && Schema::hasColumn('users', 'role'), 'Initial MySQL migration failed.');
 
-    runMigrations('migrate:rollback', ['--step' => 19]);
+    runMigrations('migrate:rollback', ['--step' => count(glob(dirname(__DIR__).'/database/migrations/2026_*.php') ?: [])]);
     check(! Schema::hasTable('customers') && ! Schema::hasColumn('users', 'role'), 'Dependency-ordered rollback failed.');
     runMigrations('migrate');
     check(Schema::hasTable('vehicles') && Schema::hasTable('audit_logs'), 'MySQL migration reapply failed.');
-    echo "PASS MySQL migrations / nineteen-step rollback / reapply\n";
+    echo "PASS MySQL migrations / domain rollback / reapply\n";
     $databaseObjects = require dirname(__DIR__).'/database/migrations/2026_10_07_000019_create_workshop_database_objects.php';
     $databaseObjects->up();
     DB::unprepared('DROP TRIGGER IF EXISTS stock_movement_audit');

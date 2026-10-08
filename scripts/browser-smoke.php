@@ -17,6 +17,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Vite;
 
 // Standalone QA router: never loaded by production routes or public/index.php.
@@ -41,7 +42,7 @@ foreach (['framework/views', 'framework/sessions', 'framework/cache', 'app/priva
     @mkdir($qa.'/storage/'.$directory, 0700, true);
 }
 $app->make(Kernel::class)->bootstrap();
-config(['database.default' => 'sqlite', 'database.connections.sqlite.database' => $qa.'/database.sqlite', 'session.driver' => 'database', 'cache.default' => 'array', 'filesystems.disks.local.root' => $qa.'/storage/app/private', 'filesystems.disks.public.root' => $qa.'/storage/app/public', 'livewire.temporary_file_upload.disk' => 'local', 'filesystems.disks.tmp-for-tests' => ['driver' => 'local', 'root' => $qa.'/storage/app/private/livewire-test-temp', 'throw' => true]]);
+config(['database.default' => 'sqlite', 'database.connections.sqlite.database' => $qa.'/database.sqlite', 'session.driver' => 'database', 'cache.default' => 'array', 'filesystems.disks.local.root' => $qa.'/storage/app/private', 'filesystems.disks.public.root' => $qa.'/storage/app/public', 'filesystems.disks.public.url' => rtrim(getenv('APP_URL') ?: 'http://localhost', '/').'/__qa/logos', 'livewire.temporary_file_upload.disk' => 'local', 'filesystems.disks.tmp-for-tests' => ['driver' => 'local', 'root' => $qa.'/storage/app/private/livewire-test-temp', 'throw' => true]]);
 Vite::useHotFile($qa.'/no-hot-file');
 if (PHP_SAPI === 'cli') {
     if (($argv[1] ?? '') !== 'init' || file_exists($qa.'/database.sqlite')) {
@@ -83,6 +84,12 @@ Route::middleware('web')->get('/__qa/login/{role}', function (string $role) use 
     request()->session()->regenerate();
 
     return redirect($role === 'customer' ? '/portal' : '/dashboard');
+});
+Route::get('/__qa/logos/logos/{filename}', function (string $filename) use ($check) {
+    $check();
+    abort_unless(preg_match('/\A[a-zA-Z0-9_-]+\.(?:png|jpe?g|webp)\z/', $filename), 404);
+
+    return Storage::disk('public')->response('logos/'.$filename);
 });
 Route::get('/__qa/state', function () use ($check) {
     $check();

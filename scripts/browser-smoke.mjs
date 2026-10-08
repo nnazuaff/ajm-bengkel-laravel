@@ -64,7 +64,10 @@ try {
     await page.setRequestInterception(true);
     page.on('request', r => r.continue({ headers: { ...r.headers(), ...(r.url().startsWith(base + '/__qa/') ? { 'X-QA-Token': token } : {}) } }));
     const state = async () => (await fetch(base + '/__qa/state', { headers: { 'X-QA-Token': token } })).json();
-    const idle = () => page.waitForNetworkIdle({ idleTime: 400, timeout: 15000 });
+    const idle = async () => {
+        await page.waitForNetworkIdle({ idleTime: 400, timeout: 15000 });
+        assert.equal(await page.$$eval('dialog[open] [data-flux-modal-close]', controls => controls.length), 0, 'Duplicate built-in modal close control');
+    };
     const go = async path => { const response = await page.goto(base + path, { waitUntil: 'networkidle0' }); return response.status(); };
     const model = (name, tag = '') => `${tag}[wire\\:model="${name}"]`;
     const fill = async (name, value) => {
@@ -89,6 +92,17 @@ try {
     await go('/__qa/login/owner');
     const routes = ['/dashboard', '/customers', '/vehicles', '/bookings', '/services', '/inventory', '/receipts', '/payments', '/history', '/mechanics', '/reports', '/audit-log', '/workshop-settings'];
     for (const route of routes) await test(`Admin desktop ${route}`, async () => { assert.equal(await go(route), 200); assert(!page.url().includes('/login')); assert(await page.$('h1')); });
+    await test('Grouped sidebar desktop and mobile navigation', async () => {
+        await go('/dashboard');
+        assert.deepEqual(await page.$$eval('[data-sidebar-section]', groups => groups.map(group => group.dataset.sidebarSection)), ['summary', 'operations', 'masters', 'finance', 'management']);
+        await page.setViewport({ width: 390, height: 844 });
+        await page.click('[aria-label="Buka navigasi"]'); await idle();
+        const sidebar = await page.$('ui-sidebar');
+        await sidebar.screenshot({ path: join(out, 'sidebar-mobile.png') });
+        await page.click('[data-sidebar-section="operations"] a[href$="/services"]'); await idle();
+        assert(page.url().endsWith('/services'));
+        await page.setViewport({ width: 1440, height: 1000 });
+    });
     await go('/dashboard');
     await page.screenshot({ path: join(out, 'admin-dashboard.png'), fullPage: true });
     for (const route of ['/', ...routes]) await test(`Mobile 390px ${route}`, async () => { await page.setViewport({ width: 390, height: 844 }); assert.equal(await go(route), 200); const size = await page.evaluate(() => ({ width: innerWidth, scroll: document.documentElement.scrollWidth })); assert(size.scroll <= size.width + 1, JSON.stringify(size)); });
@@ -116,7 +130,11 @@ try {
         await fill('stockForm.quantity','1'); await fill('stockForm.reason','QA modal restock'); await button('Catat mutasi'); assert.equal((await state()).stock,21);
         await page.click('[aria-label="Koreksi stok QA Motor Oil"]'); await idle();
         await fill('stockForm.quantity','-1'); await fill('stockForm.reason','QA modal correction'); await button('Catat mutasi'); assert.equal((await state()).stock,20);
-        await page.click('[aria-label="Riwayat stok QA Motor Oil"]'); await idle(); await textHas('QA modal correction'); await button('Tutup riwayat');
+        await page.click('[aria-label="Riwayat stok QA Motor Oil"]'); await idle(); await textHas('QA modal correction');
+        assert.equal(await page.$$eval('dialog[open] button', buttons => buttons.filter(button => button.textContent.trim() === 'Tutup riwayat').length), 1);
+        await button('Tutup riwayat'); await page.waitForFunction(() => !document.querySelector('dialog[open]'));
+        await page.click('[aria-label="Riwayat stok QA Motor Oil"]'); await idle();
+        await page.keyboard.press('Escape'); await idle(); await page.waitForFunction(() => !document.querySelector('dialog[open]'));
         await button('Tambah barang'); await fill('form.sku','UNSAVED-DEMO'); await button('Batal');
         await button('Tambah barang'); assert.equal(await page.$eval(model('form.sku'),e=>e.value),''); await button('Batal');
     });
@@ -220,7 +238,49 @@ try {
         assert.equal(data.reception_email_verified,null);
         await go('/__qa/login/reception'); await go('/portal'); await textHas('B3003QA');
     });
-    await test('No browser JavaScript or console errors' , async () => { assert.equal(errors.length, 0, JSON.stringify(errors)); });
+    await test('Horizontal logo upload navbar and mobile sidebar', async () => {
+        await go('/__qa/login/owner'); await go('/workshop-settings');
+        const imagePath = join(out, 'horizontal.png');
+        const fixture = spawnSync('php', ['-r', '$im=imagecreatetruecolor(1600,560); imagefill($im,0,0,imagecolorallocate($im,250,250,250)); imagestring($im,5,100,260,"QA HORIZONTAL LOGO",imagecolorallocate($im,20,20,20)); imagepng($im,$argv[1]);', imagePath], { encoding: 'utf8' });
+        assert.equal(fixture.status, 0, fixture.stderr);
+        await (await page.$('#workshop-horizontal-logo')).uploadFile(imagePath); await idle();
+        await page.waitForSelector('img[alt="Pratinjau logo horizontal baru"]');
+        await button('Simpan identitas'); await textHas('Identitas bengkel disimpan.');
+        for (const route of ['/', '/dashboard', '/booking']) {
+            if (route === '/booking') await go('/__qa/login/customer');
+            await go(route);
+            const logo = await page.$eval('[data-workshop-brand] img', img => ({ url: img.src, alt: img.alt, text: img.parentElement.textContent.trim() }));
+            assert.equal(logo.alt, 'AJM Bengkel'); assert.equal(logo.text, '');
+            const response = await fetch(logo.url, { headers: { 'X-QA-Token': token } }); assert.equal(response.status, 200); assert.equal(response.headers.get('content-type'), 'image/png');
+            await page.waitForFunction(() => [...document.querySelectorAll('[data-workshop-brand] img')].every(img => img.complete && img.naturalWidth === 1600));
+        }
+        await page.setViewport({ width: 390, height: 844 }); await go('/booking');
+        assert((await page.evaluate(() => document.documentElement.scrollWidth)) <= 391);
+        await page.screenshot({ path: join(out, 'horizontal-mobile-navbar.png'), fullPage: true });
+        await page.click('[aria-label="Buka navigasi"]'); await idle();
+        await (await page.$('ui-sidebar')).screenshot({ path: join(out, 'horizontal-mobile-sidebar.png') });
+        await page.setViewport({ width: 1440, height: 1000 });
+    });
+    await test('Favicon upload and public admin customer head links', async () => {
+        await go('/__qa/login/owner'); await go('/workshop-settings');
+        const iconPath = join(out, 'favicon.png');
+        const fixture = spawnSync('php', ['-r', '$im=imagecreatetruecolor(512,512); imagefill($im,0,0,imagecolorallocate($im,200,30,30)); imagepng($im,$argv[1]);', iconPath], { encoding: 'utf8' });
+        assert.equal(fixture.status, 0, fixture.stderr);
+        await (await page.$('#workshop-favicon')).uploadFile(iconPath); await idle();
+        await page.waitForSelector('img[alt="Pratinjau favicon baru"]');
+        await button('Simpan identitas'); await textHas('Identitas bengkel disimpan.');
+        let iconUrl;
+        for (const route of ['/', '/dashboard', '/booking']) {
+            if (route === '/booking') await go('/__qa/login/customer');
+            await go(route);
+            const icons = await page.$$eval('link[rel="icon"]', links => links.map(link => ({ url: link.href, type: link.type })));
+            assert.equal(icons.length, 1); assert.equal(icons[0].type, 'image/png');
+            iconUrl ??= icons[0].url; assert.equal(icons[0].url, iconUrl);
+            const response = await fetch(iconUrl, { headers: { 'X-QA-Token': token } });
+            assert.equal(response.status, 200); assert.equal(response.headers.get('content-type'), 'image/png');
+        }
+    });
+    await test('No browser JavaScript or console errors'   , async () => { assert.equal(errors.length, 0, JSON.stringify(errors)); });
     writeFileSync(join(out, 'final-state.json'), JSON.stringify(await state(), null, 2));
 } finally {
     if (browser) await browser.close();

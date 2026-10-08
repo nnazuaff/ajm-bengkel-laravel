@@ -177,7 +177,7 @@ it('bounds account options and requires refining the search rather than silently
     $last = User::factory()->create(['name' => 'Zzz Akun Terakhir', 'email' => 'specific@example.test']);
     $customer = Customer::factory()->create();
     Livewire::actingAs($actor)->test(CustomerAccount::class, ['customerId' => $customer->id])
-        ->assertSee('Hasil dibatasi 50 akun. Persempit pencarian nama atau email.')
+        ->assertSee('Hasil dibatasi 50 akun.')->assertSee('Persempit pencarian nama atau email.')
         ->assertDontSee($last->email)
         ->set('search', 'specific@example.test')
         ->assertSee($last->email)
