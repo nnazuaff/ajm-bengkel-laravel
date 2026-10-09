@@ -68,10 +68,10 @@ it('does not link a matching email or expose archived customer history', functio
     $user = User::factory()->create();
     $customer = Customer::factory()->create(['email' => $user->email]);
     $vehicle = Vehicle::factory()->create(['customer_id' => $customer->id]);
-    Livewire::actingAs($user)->test(CustomerPortal::class)->assertSee('Hubungi staf')->assertDontSee($vehicle->license_plate);
+    Livewire::actingAs($user)->test(CustomerPortal::class)->assertSee('Histori lama menunggu verifikasi identitas')->assertDontSee($vehicle->license_plate);
     $customer->forceFill(['user_id' => $user->id])->save();
     $customer->delete();
-    Livewire::actingAs($user)->test(CustomerPortal::class)->assertSee('Hubungi staf')->assertDontSee($vehicle->license_plate);
+    Livewire::actingAs($user)->test(CustomerPortal::class)->assertSee('Histori lama menunggu verifikasi identitas')->assertDontSee($vehicle->license_plate);
 });
 
 it('locks browser-selected identifiers', function ($property) {
@@ -234,7 +234,7 @@ it('does not treat a submitted booking matching customer phone as proof of owner
     $customer = Customer::factory()->create(['email' => $user->email, 'phone' => '6281234567890']);
     $vehicle = Vehicle::factory()->create(['customer_id' => $customer->id]);
     Booking::factory()->create(['submitted_by' => $user->id, 'phone' => $customer->phone, 'license_plate' => $vehicle->license_plate]);
-    Livewire::actingAs($user)->test(CustomerPortal::class)->assertSee('Hubungi staf')
+    Livewire::actingAs($user)->test(CustomerPortal::class)->assertSee('Histori lama menunggu verifikasi identitas')
         ->assertSee(route('booking.mine'))->assertDontSee($vehicle->license_plate);
     expect($customer->fresh()->user_id)->toBeNull();
 });

@@ -2,6 +2,7 @@
 
 use App\Actions\ManageReceipt;
 use App\Livewire\ServiceHistory;
+use App\Livewire\ServiceHistoryDetail;
 use App\Models\Customer;
 use App\Models\ServiceOrder;
 use App\Models\User;
@@ -16,6 +17,8 @@ it('finds archived vehicle service lineage by canonical plate without losing com
     $customer->delete();
     Livewire::actingAs(User::factory()->create(['role' => 'admin']))->test(ServiceHistory::class)
         ->set('search', 'b 1234 abc')->assertSee('B1234ABC')->call('selectVehicle', $vehicle->id)
+        ->assertSee('Sari Wulandari')->assertDispatchedTo(ServiceHistoryDetail::class, 'open-service-history', id: $vehicle->id);
+    Livewire::test(ServiceHistoryDetail::class)->call('openHistory', $vehicle->id)
         ->assertSee('Sari Wulandari')->assertSee('Rem berisik.')->assertSee('Kampas tipis.')
         ->assertSee($order->service_number);
 });
@@ -24,7 +27,7 @@ it('links draft history receipts to the editor rather than the unavailable print
     $actor = User::factory()->create(['role' => 'admin']);
     $order = ServiceOrder::factory()->create(['status' => 'completed']);
     $receipt = app(ManageReceipt::class)->create($actor, ['service_order_id' => $order->id]);
-    Livewire::actingAs($actor)->test(ServiceHistory::class)->call('selectVehicle', $order->vehicle_id)
+    Livewire::actingAs($actor)->test(ServiceHistoryDetail::class)->call('openHistory', $order->vehicle_id)
         ->assertSeeHtml(route('receipts.edit', $receipt->id))
         ->assertDontSeeHtml(route('receipts.show', $receipt));
 });

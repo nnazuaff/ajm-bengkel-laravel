@@ -10,8 +10,8 @@ it('serves a responsive public home using only configured workshop identity', fu
     WorkshopSetting::current()->update(['name' => 'Bengkel Uji', 'phone' => '628112345678', 'address' => 'Alamat terkonfigurasi']);
 
     $this->get('/')->assertOk()->assertSee('Bengkel Uji')->assertSee('628112345678')
-        ->assertSee('Alamat terkonfigurasi')->assertSee('Akun diperlukan')
-        ->assertSee(route('booking.mine'))->assertSee(route('login'))->assertSee(route('register'))
+        ->assertSee('Alamat terkonfigurasi')->assertSee('Tanpa akun')
+        ->assertSee(route('booking.guest'))->assertSee(route('login'))->assertSee(route('register'))
         ->assertSee('name="viewport"', false)->assertSee('md:grid-cols-2', false)
         ->assertDontSee('08:00')->assertDontSee('Rp 50.000');
 });

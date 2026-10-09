@@ -71,7 +71,7 @@ it('opens the existing service receipt instead of a second draft', function () {
 it('rejects missing and unfinished service intake', function () {
     $order = ServiceOrder::factory()->create(['status' => 'waiting']);
     $this->actingAs(User::factory()->create(['role' => 'admin']))
-        ->get(route('receipts.create', ['service_order_id' => $order->id]))->assertStatus(422);
+        ->get(route('receipts.create', ['service_order_id' => $order->id]))->assertRedirect(route('services.detail', $order->id));
     $this->get(route('receipts.create', ['service_order_id' => 999999]))->assertNotFound();
     $this->get(route('receipts.edit', ['receipt' => 999999]))->assertNotFound();
     expect(Receipt::count())->toBe(0);

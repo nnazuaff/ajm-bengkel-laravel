@@ -13,6 +13,7 @@ use App\Models\Customer;
 use App\Models\ServiceOrder;
 use App\Models\User;
 use App\Models\Vehicle;
+use App\Support\WorkshopInput;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
@@ -28,7 +29,8 @@ function bookingInput(array $overrides = []): array
     ], $overrides);
 }
 
-it('records an authenticated booking snapshot without creating or linking master records', function () {
+// Revised flow creates master relations at submission; snapshots remain request-time evidence.
+it('records an authenticated booking snapshot with resolved master records', function () {
     $user = User::factory()->create();
     $booking = app(CreateBooking::class)->create($user, bookingInput(['status' => 'converted_to_service', 'submitted_by' => 999]));
 
@@ -37,7 +39,10 @@ it('records an authenticated booking snapshot without creating or linking master
         ->and($booking->phone)->toBe('6281234567890')
         ->and($booking->license_plate)->toBe('B1234ABC')
         ->and($booking->booking_number)->toStartWith('BKG-')
-        ->and(Customer::count())->toBe(0)->and(Vehicle::count())->toBe(0)->and(ServiceOrder::count())->toBe(0);
+        ->and(Customer::count())->toBe(1)->and(Vehicle::count())->toBe(1)->and(ServiceOrder::count())->toBe(0)
+        ->and($booking->customer->user_id)->toBe($user->id)
+        ->and($booking->vehicle->customer_id)->toBe($booking->customer_id)
+        ->and($booking->vehicle->latest_mileage)->toBe(1500);
     $this->assertDatabaseHas('audit_logs', ['action' => 'booking.created', 'actor_id' => $user->id]);
     expect(json_encode(AuditLog::first()->context))->not->toContain($booking->phone);
 });
@@ -123,7 +128,11 @@ it('rolls back booking creation if its audit cannot be saved', function () {
 
 function arrivedBooking(User $admin, array $overrides = []): Booking
 {
-    $booking = app(CreateBooking::class)->create(User::factory()->create(), bookingInput($overrides));
+    // Legacy snapshot fixture exercises pre-revision reception compatibility.
+    $input = bookingInput($overrides);
+    $input['phone'] = WorkshopInput::phone($input['phone']);
+    $input['license_plate'] = WorkshopInput::plate($input['license_plate']);
+    $booking = Booking::factory()->create([...$input, 'submitted_by' => User::factory()->create()->id]);
     app(UpdateBooking::class)->update($admin, $booking, ['status' => 'confirmed']);
 
     return app(UpdateBooking::class)->update($admin, $booking, ['status' => 'arrived']);

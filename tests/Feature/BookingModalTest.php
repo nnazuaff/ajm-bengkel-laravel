@@ -40,7 +40,7 @@ it('closes the modal and refreshes only the customers own booking list after sav
     ])->call('submit')->assertHasNoErrors()->assertSet('showForm', false)->assertDispatched('booking-created');
     $page->dispatch('booking-created')->assertSet('paginators.page', 1)
         ->assertSee(Booking::sole()->booking_number)->assertSee('Booking berhasil diajukan');
-    expect(Customer::count())->toBe(0)->and(Vehicle::count())->toBe(0);
+    expect(Customer::count())->toBe(1)->and(Vehicle::count())->toBe(1);
 });
 
 it('protects the modal from noncustomer roles and stale role changes', function () {

@@ -4,11 +4,14 @@
 
 use App\Actions\ConvertBooking;
 use App\Actions\CreateBooking;
+use App\Actions\ManageCheckInCode;
 use App\Actions\ManageReceipt;
 use App\Actions\NextServiceNumber;
+use App\Actions\ProcessCheckIn;
 use App\Actions\ReceiveWalkIn;
 use App\Actions\SaveServiceJob;
 use App\Actions\StockLedger;
+use App\Actions\SubmitCheckIn;
 use App\Actions\UpdateBooking;
 use App\Actions\UpdateServiceOrder;
 use App\Models\AuditLog;
@@ -118,7 +121,7 @@ try {
         'current_mileage' => 800, 'booking_date' => now()->addDay()->toDateString(),
         'arrival_time' => '09:00', 'service_type' => 'Servis rem', 'complaint' => 'Rem berisik.',
     ]);
-    check(Customer::where('phone', '6281299998888')->doesntExist(), 'Booking wrote master records before conversion.');
+    check(Customer::where('phone', '6281299998888')->exists() && $booking->vehicle_id !== null, 'Booking did not resolve master records.');
     $booking = app(UpdateBooking::class)->update($actor, $booking, ['status' => 'confirmed']);
     $booking = app(UpdateBooking::class)->update($actor, $booking, ['status' => 'arrived']);
     $converted = app(ConvertBooking::class)->convert($actor, $booking, null, ['link_account' => true, 'ownership_verified' => true]);
@@ -279,6 +282,16 @@ try {
     check($successfulFinalizations === 1 && $successfulPayments === 1 && $raceReceipt->payments()->count() === 1, 'Concurrent finance duplicated finalization/payment.');
     check($raceReceipt->fresh()->status->value === 'paid', 'Concurrent payment did not settle receipt.');
     echo "PASS MySQL concurrent finance: 4 attempts / 1 finalization / 1 payment\n";
+    $mechanic = User::factory()->create(['role' => 'mechanic']);
+    $code = app(ManageCheckInCode::class)->generate($mechanic);
+    $input = ['code' => $code->code, 'name' => 'Check-in verification', 'phone' => '081200001234'];
+    $entry = app(SubmitCheckIn::class)->submit($input);
+    check(app(SubmitCheckIn::class)->submit($input)->id === $entry->id, 'Repeated check-in duplicated queue.');
+    $serviceInput = ['vehicle' => ['license_plate' => 'D9010MYSQL', 'brand' => 'Honda', 'model' => 'Vario'], 'current_mileage' => 10, 'complaint' => 'Check-in verification', 'identity_verified' => true];
+    $checkInOrder = app(ProcessCheckIn::class)->process($mechanic, $entry, $serviceInput);
+    check(app(ProcessCheckIn::class)->process($mechanic, $entry, $serviceInput)->id === $checkInOrder->id && $checkInOrder->mechanic_id === $mechanic->id, 'Check-in conversion identity/idempotency failed.');
+    check($code->getRawOriginal('code') !== $code->code, 'Check-in code stored unencrypted.');
+    echo "PASS MySQL check-in encrypted code / duplicate guard / mechanic conversion\n";
 } catch (Throwable $exception) {
     $exitCode = 1;
     fwrite(STDERR, 'FAIL '.$exception->getMessage().PHP_EOL);

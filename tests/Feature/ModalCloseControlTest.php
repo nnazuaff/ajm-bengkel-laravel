@@ -2,24 +2,30 @@
 
 use App\Livewire\BookingRequest;
 use App\Livewire\BookingReview;
+use App\Livewire\CheckInIntake;
 use App\Livewire\CustomerAccount;
 use App\Livewire\CustomerEditor;
 use App\Livewire\InventoryCategories;
 use App\Livewire\InventoryEditor;
 use App\Livewire\InventoryHistory;
 use App\Livewire\InventoryStock;
+use App\Livewire\ServiceHistoryDetail;
 use App\Livewire\StaffEditor;
 use App\Livewire\VehicleEditor;
 use App\Livewire\WalkInIntake;
 use App\Models\Booking;
+use App\Models\CheckIn;
 use App\Models\Customer;
 use App\Models\InventoryItem;
 use App\Models\User;
+use App\Models\Vehicle;
 use Livewire\Livewire;
 
 it('renders one explicit close control without the Flux duplicate', function (string $component, string $open, string $close) {
     $role = $component === BookingRequest::class ? 'customer' : 'owner';
     $arguments = match ($component) {
+        ServiceHistoryDetail::class => [Vehicle::factory()->create()->id],
+        CheckInIntake::class => [CheckIn::create(['customer_id' => Customer::factory()->create()->id, 'status' => 'waiting', 'checked_in_at' => now()])->id],
         InventoryHistory::class => [InventoryItem::factory()->create()->id],
         InventoryStock::class => [InventoryItem::factory()->create()->id, 'in'],
         CustomerAccount::class => [Customer::factory()->create()->id],
@@ -40,6 +46,8 @@ it('renders one explicit close control without the Flux duplicate', function (st
     expect($controls)->toHaveCount(1);
     $modal->call($close)->assertSet($component === WalkInIntake::class ? 'showIntake' : 'showForm', false);
 })->with([
+    [ServiceHistoryDetail::class, 'openHistory', 'closeHistory'],
+    [CheckInIntake::class, 'openForm', 'closeForm'],
     [InventoryHistory::class, 'history', 'closeHistory'],
     [InventoryEditor::class, 'create', 'closeForm'],
     [InventoryStock::class, 'openStock', 'closeStock'],

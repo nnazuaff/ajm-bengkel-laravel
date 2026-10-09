@@ -64,7 +64,7 @@ if (PHP_SAPI === 'cli') {
     app(ManageReceipt::class)->finalize($owner, $receipt);
     $receptionUser = User::factory()->unverified()->create(['name' => 'QA Reception Customer', 'email' => 'qa-reception@example.test', 'role' => 'customer']);
     $archivedContact = Customer::factory()->create(['name' => 'QA Archived Reception', 'phone' => '628120000003']);
-    $archivedContact->delete();
+    // Existing offline contact remains active; account claim requires reception confirmation.
     echo "QA SQLite initialized.\n";
     exit;
 }

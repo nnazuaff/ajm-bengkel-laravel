@@ -41,13 +41,13 @@ it('suppresses registration verification mail without fabricating verification w
     Notification::fake();
 
     $this->post(route('register.store'), [
-        'name' => 'Optional verification', 'email' => 'optional@example.com',
+        'name' => 'Optional verification', 'phone' => '081234567890', 'email' => 'optional@example.com',
         'password' => 'password', 'password_confirmation' => 'password',
     ])->assertSessionHasNoErrors()->assertRedirect('/dashboard');
 
     $user = User::where('email', 'optional@example.com')->firstOrFail();
     expect($user->email_verified_at)->toBeNull()->and($user->hasVerifiedEmail())->toBeFalse();
-    expect(Customer::count())->toBe(0);
+    expect(Customer::count())->toBe(1);
     Notification::assertNothingSent();
     $this->get(route('booking.mine'))->assertOk();
     $this->get(route('portal'))->assertOk();
@@ -129,7 +129,7 @@ it('persists verification middleware for real Livewire updates', function () {
     $this->postJson(Livewire::getUpdateUri(), $payload, ['X-Livewire' => ''])->assertForbidden();
 });
 
-it('allows unverified booking snapshots without linking or creating master records when disabled', function () {
+it('reuses offline masters without claiming history during unverified booking', function () {
     config(['fortify.require_email_verification' => false]);
     $user = User::factory()->unverified()->create();
     $customer = Customer::factory()->create(['email' => $user->email, 'phone' => '6281234567890']);
@@ -143,7 +143,7 @@ it('allows unverified booking snapshots without linking or creating master recor
     expect(Booking::sole()->submitted_by)->toBe($user->id)
         ->and(Customer::count())->toBe(1)->and(Vehicle::count())->toBe(1)
         ->and($customer->fresh()->user_id)->toBeNull();
-    Livewire::test(CustomerPortal::class)->assertSee('Hubungi staf')->assertDontSee($vehicle->license_plate);
+    Livewire::test(CustomerPortal::class)->assertSee('Histori lama menunggu verifikasi identitas')->assertDontSee($vehicle->license_plate);
 });
 
 it('does not weaken active roles or ownership on subsequent component requests when disabled', function () {

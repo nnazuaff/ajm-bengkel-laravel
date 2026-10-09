@@ -37,7 +37,8 @@ it('shows only owned bookings and cancels only the submitters own nonarrived req
     Livewire::actingAs($user)->test(CustomerBooking::class)->call('cancel', $own->id)->assertForbidden();
 });
 
-it('submits customer snapshots with field validation and does not create master records', function () {
+// Revised flow resolves customer and vehicle during submission, not reception.
+it('submits customer snapshots with field validation and creates master relations', function () {
     $user = User::factory()->create();
     $page = Livewire::actingAs($user)->test(BookingRequest::class)->call('openForm');
     $page->set('form', ['name' => ['malformed']])->call('submit')->assertHasErrors(['form.name', 'form.phone']);
@@ -49,7 +50,8 @@ it('submits customer snapshots with field validation and does not create master 
         'submitted_by' => 999, 'status' => 'arrived',
     ])->call('submit')->assertHasNoErrors()->assertDispatched('booking-created')->assertSet('showForm', false);
     expect(Booking::sole()->submitted_by)->toBe($user->id)->and(Booking::sole()->status)->toBe(BookingStatus::Pending)
-        ->and(Customer::count())->toBe(0)->and(Vehicle::count())->toBe(0)->and(ServiceOrder::count())->toBe(0);
+        ->and(Customer::count())->toBe(1)->and(Vehicle::count())->toBe(1)->and(ServiceOrder::count())->toBe(0)
+        ->and(Booking::sole()->customer->user_id)->toBe($user->id);
 });
 
 it('enforces authenticated routes and customer verification', function () {

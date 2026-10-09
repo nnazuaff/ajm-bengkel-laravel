@@ -5,6 +5,7 @@ use App\Models\User;
 it('public registration cannot grant a staff role', function () {
     $this->post(route('register.store'), [
         'name' => 'Rizki Pratama',
+        'phone' => '081234567890',
         'email' => 'rizki@example.test',
         'password' => 'password',
         'password_confirmation' => 'password',

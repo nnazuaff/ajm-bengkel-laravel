@@ -81,6 +81,28 @@ try {
         assert(await handle.asElement(), `Missing button: ${text}`);
         await handle.asElement().click(); await idle();
     };
+    const checkTables = async () => {
+        const faults = await page.evaluate(() => {
+            const faults = [];
+            for (const table of document.querySelectorAll('table')) {
+                if (!table.getBoundingClientRect().width || table.closest('dialog:not([open])')) continue;
+                if (!table.classList.contains('workshop-responsive-table')) faults.push('Unadapted table');
+                if (table.parentElement.scrollWidth > table.parentElement.clientWidth + 1) faults.push('Table container scrolls horizontally');
+                for (const row of table.querySelectorAll('tbody tr')) {
+                    if (getComputedStyle(row).display !== 'block') faults.push('Row is not a mobile card');
+                    for (const cell of row.cells) {
+                        if (cell.colSpan > 1) continue;
+                        if (!cell.dataset.label) faults.push('Missing cell label');
+                        if (cell.scrollWidth > cell.clientWidth + 1) faults.push('Cell content overflows: ' + cell.dataset.label);
+                        const style = getComputedStyle(cell, '::before');
+                        if (style.content !== JSON.stringify(cell.dataset.label)) faults.push('Missing visible cell label');
+                    }
+                }
+            }
+            return faults;
+        });
+        assert.deepEqual(faults, []);
+    };
     const textHas = async text => assert((await page.$eval('body', e => e.innerText)).includes(text), `Missing text: ${text}`);
     const test = async (name, fn) => {
         try { await fn(); results.push({ name, pass: true }); }
@@ -105,7 +127,7 @@ try {
     });
     await go('/dashboard');
     await page.screenshot({ path: join(out, 'admin-dashboard.png'), fullPage: true });
-    for (const route of ['/', ...routes]) await test(`Mobile 390px ${route}`, async () => { await page.setViewport({ width: 390, height: 844 }); assert.equal(await go(route), 200); const size = await page.evaluate(() => ({ width: innerWidth, scroll: document.documentElement.scrollWidth })); assert(size.scroll <= size.width + 1, JSON.stringify(size)); });
+    for (const route of ['/', ...routes]) await test(`Mobile 390px ${route}`, async () => { await page.setViewport({ width: 390, height: 844 }); assert.equal(await go(route), 200); const size = await page.evaluate(() => ({ width: innerWidth, scroll: document.documentElement.scrollWidth })); assert(size.scroll <= size.width + 1, JSON.stringify(size)); await checkTables(); });
     await page.screenshot({ path: join(out, 'admin-mobile.png'), fullPage: true });
     await page.setViewport({ width: 1440, height: 1000 });
     await test('Inventory category creation and confirmed deletion through UI', async () => {
@@ -122,7 +144,7 @@ try {
         await button('Tambah pelanggan'); await fill('form.name','Unsaved draft'); await page.keyboard.press('Escape'); await idle();
         await button('Tambah pelanggan'); assert.equal(await page.$eval(model('form.name'),e=>e.value),''); await button('Batal');
         const customer=(await state()).customers.find(c=>c.name==='QA Browser Customer edited');
-        await page.click(`[wire\\:click="openAccount(${customer.id})"]`); await idle(); await textHas('Akun portal pelanggan'); await button('Batal');
+        assert.equal(await page.evaluate(() => [...document.querySelectorAll('button')].filter(el => el.getAttribute('wire:click')?.startsWith('openAccount(')).length), 0);
     });
     await test('Vehicle create through UI' , async () => { await go('/vehicles'); await button('Tambah kendaraan'); const customer = (await state()).customers.find(c => c.name === 'QA Browser Customer edited'); assert(customer); await select('form.customer_id', customer.id); await fill('form.license_plate', 'B 2222 QA'); await fill('form.brand', 'Honda'); await fill('form.model', 'Vario'); await fill('form.latest_mileage', '2000'); await button('Simpan kendaraan'); assert((await state()).vehicles.some(v => v.license_plate === 'B2222QA')); });
     await test('Inventory modal restock adjustment history and draft cancel', async () => {
@@ -205,7 +227,7 @@ try {
         await page.waitForFunction(()=>document.activeElement?.closest('dialog[open]'));
         await fill('form.phone','081299999999'); await button('Batal'); await page.waitForFunction(()=>!document.querySelector('dialog[open]'));
         assert.equal(await page.evaluate(()=>document.activeElement?.textContent.trim()),'Buat booking');
-        await button('Buat booking'); assert.equal(await page.$eval(model('form.phone'), e=>e.value),'');
+        await button('Buat booking'); assert.equal(await page.$eval(model('form.phone'), e=>e.value),'628120000001');
         await page.keyboard.press('Escape'); await idle(); await page.waitForFunction(()=>!document.querySelector('dialog[open]'));
         await page.setViewport({width:390,height:844}); await button('Buat booking');
         const bounds=await page.$eval('dialog[open]', e=>({left:e.getBoundingClientRect().left,right:e.getBoundingClientRect().right,height:e.clientHeight,scroll:e.scrollHeight}));
@@ -230,8 +252,7 @@ try {
         for (const status of ['confirmed','arrived']) {
             await page.select('#booking-status',status); await idle(); await button('Simpan perubahan');
         }
-        await textHas('Pulihkan data arsip');
-        await page.click('[wire\\:model="detail.restore_archived"]');
+        await textHas('Konfirmasi akses histori');
         await page.click('[wire\\:model="detail.ownership_verified"]');
         await button('Terima servis'); await textHas('Servis berhasil dibuat');
         const data=await state(); const restored=data.customers.find(c=>c.name==='QA Archived Reception'); assert(restored?.user_id);
@@ -280,7 +301,173 @@ try {
             assert.equal(response.status, 200); assert.equal(response.headers.get('content-type'), 'image/png');
         }
     });
-    await test('No browser JavaScript or console errors'   , async () => { assert.equal(errors.length, 0, JSON.stringify(errors)); });
+    await test('Service history popup mobile close Escape focus and evidence', async () => {
+        await go('/__qa/login/owner'); await page.setViewport({ width: 390, height: 844 }); await go('/history');
+        const data = await state(); const order = data.orders.find(order => order.id === orderId);
+        const vehicle = data.vehicles.find(vehicle => vehicle.id === order.vehicle_id) || data.vehicles.find(vehicle => vehicle.license_plate === 'B1001QA');
+        const selector = `[aria-label="Riwayat ${vehicle.license_plate}"]`;
+        assert.equal(await page.$('dialog[open]'), null);
+        await page.click(selector); await idle(); await page.waitForSelector('dialog[open]');
+        await page.waitForFunction(() => document.activeElement?.closest('dialog[open]'));
+        await textHas('QA browser noisy brakes'); await textHas('QA Replace brake pad'); await textHas('QA worn brake pad');
+        await textHas('QA Motor Oil'); await textHas('40000,00');
+        const bounds = await page.$eval('dialog[open]', dialog => ({ width: dialog.clientWidth, scroll: dialog.scrollWidth }));
+        assert(bounds.scroll <= bounds.width + 1, JSON.stringify(bounds));
+        assert.equal(await page.$$eval('dialog[open] button', buttons => buttons.filter(button => button.textContent.trim() === 'Tutup riwayat').length), 1);
+        await page.screenshot({ path: join(out, 'service-history-popup-mobile.png'), fullPage: true });
+        await button('Tutup riwayat'); await page.waitForFunction(() => !document.querySelector('dialog[open]'));
+        assert.equal(await page.evaluate(selector => ({ active: document.activeElement?.tagName, target: document.querySelector(selector)?.getAttribute('aria-label'), same: document.activeElement === document.querySelector(selector) }), selector).then(info => { if (!info.same) throw new Error('Focus return failed: ' + JSON.stringify(info)); return info.same; }), true);
+        await page.click(selector); await idle(); await page.keyboard.press('Escape'); await idle();
+        await page.waitForFunction(() => !document.querySelector('dialog[open]'));
+        assert.equal(await page.evaluate(selector => ({ active: document.activeElement?.tagName, target: document.querySelector(selector)?.getAttribute('aria-label'), same: document.activeElement === document.querySelector(selector) }), selector).then(info => { if (!info.same) throw new Error('Focus return failed: ' + JSON.stringify(info)); return info.same; }), true);
+        await page.setViewport({ width: 1440, height: 1000 });
+    });
+    await test('Mobile 320px populated tables and receipt print layout' , async () => {
+        await go('/__qa/login/owner'); await page.setViewport({ width: 320, height: 760 });
+        for (const path of [...routes, `/services/${orderId}`, `/receipts/${receiptId}/edit`, `/receipts/${receiptId}/view`]) {
+            assert.equal(await go(path), 200); await checkTables();
+            assert((await page.evaluate(() => document.documentElement.scrollWidth)) <= 321, path);
+        }
+        await go('/inventory'); await page.screenshot({ path: join(out, 'inventory-mobile-cards.png'), fullPage: true });
+        await page.click('[aria-label="Riwayat stok QA Motor Oil"]'); await idle(); await checkTables();
+        await page.screenshot({ path: join(out, 'stock-history-mobile-cards.png'), fullPage: true });
+        await button('Tutup riwayat');
+        await go(`/receipts/${receiptId}/view`); await page.emulateMediaType('print');
+        assert.equal(await page.$eval('tbody tr', row => getComputedStyle(row).display), 'table-row');
+        await page.emulateMediaType('screen'); await page.setViewport({ width: 1440, height: 1000 });
+        await go('/inventory'); assert.equal(await page.$eval('tbody tr', row => getComputedStyle(row).display), 'table-row');
+    });
+    await test('Receipt required reason appears once directly below its field', async () => {
+        await go('/__qa/login/owner'); await go(`/receipts/${receiptId}/edit`);
+        await button('Batalkan bon');
+        const fieldError = await page.$eval('ui-field:has(textarea[wire\\:model="reason"]) [data-flux-error]', error => error.textContent.trim());
+        assert(fieldError);
+        const count = await page.$eval('body', (body, message) => body.innerText.split(message).length - 1, fieldError);
+        assert.equal(count, 1, fieldError);
+        await page.screenshot({ path: join(out, 'receipt-inline-validation.png'), fullPage: true });
+    });
+    await test('Guest booking resolves masters and check-in converts through mechanic UI', async () => {
+        await go('/booking/guest');
+        const nextDate = await page.$eval(model('form.booking_date'), input => input.min);
+        for (const [name, value] of Object.entries({ name: 'QA Guest', phone: '08120000009', license_plate: 'D 9009 QA', brand: 'Honda', model: 'Beat', current_mileage: '100', booking_date: nextDate, arrival_time: '11:00', service_type: 'Servis', complaint: 'QA guest complaint' })) await fill('form.' + name, value);
+        await button('Ajukan booking'); await textHas('Booking berhasil diajukan');
+        const guest = (await state()).customers.find(customer => customer.name === 'QA Guest'); assert(guest);
+        assert((await state()).vehicles.some(vehicle => vehicle.customer_id === guest.id && vehicle.license_plate === 'D9009QA'));
+        await go('/__qa/login/mechanic'); await go('/check-ins'); await button('Generate kode baru');
+        const activeCode = await page.$eval('[data-check-in-code]', element => element.textContent.trim());
+        const qr = await page.$eval('img[alt="QR halaman check-in bengkel"]', img => img.src);
+        const browserQr = await page.evaluate(async url => ({ status: (await fetch(url)).status, type: (await fetch(url)).headers.get('content-type') }), qr);
+        assert.equal(browserQr.status, 200); assert.equal(browserQr.type, 'image/svg+xml');
+        const qrSvg = await page.evaluate(async url => (await fetch(url)).text(), qr);
+        const { Resvg } = require(join(root, '.hermes/qa/qr-deps/node_modules/@resvg/resvg-js'));
+        const jsQR = require(join(root, '.hermes/qa/qr-deps/node_modules/jsqr'));
+        const bitmap = new Resvg(qrSvg).render();
+        const decoded = jsQR(new Uint8ClampedArray(bitmap.pixels), bitmap.width, bitmap.height);
+        assert(decoded, 'Actual QR cannot be decoded'); assert.equal(decoded.data, base + '/check-in');
+        assert(!decoded.data.includes(activeCode), 'Active code must not appear in QR');
+        writeFileSync(join(out, 'decoded-check-in-qr.txt'), decoded.data);
+        const visitorContext = await browser.createBrowserContext();
+        const visitor = await visitorContext.newPage();
+        await visitor.setViewport({ width: 390, height: 844 });
+        visitor.on('pageerror', error => errors.push({ url: visitor.url(), message: error.message }));
+        await visitor.goto(base + '/check-in', {waitUntil:'networkidle0'});
+        const beforeHandoffCookies = await visitor.cookies();
+        const oldGuestCookie = beforeHandoffCookies.find(cookie => cookie.name.startsWith('ajm_qa_'));
+        assert(oldGuestCookie, 'Missing guest session cookie');
+        const visitorPassword = randomBytes(18).toString('hex');
+        for (const [name, value] of Object.entries({ code: activeCode, name: 'QA QR Visitor', phone: '08120000010', email: 'qr-visitor@example.test', password: visitorPassword, password_confirmation: visitorPassword })) {
+            await visitor.$eval(model(name), (el, value) => { el.value=value; el.dispatchEvent(new Event('input',{bubbles:true})); el.dispatchEvent(new Event('change',{bubbles:true})); }, value);
+        }
+        await visitor.click('button[type="submit"]');
+        await visitor.waitForFunction(() => document.body.innerText.includes('Tunggu konfirmasi mekanik'));
+        const afterHandoffCookie = (await visitor.cookies()).find(cookie => cookie.name === oldGuestCookie.name);
+        assert(afterHandoffCookie && afterHandoffCookie.value !== oldGuestCookie.value, 'Guest handoff session did not rotate');
+        const staleContext = await browser.createBrowserContext();
+        const staleVisitor = await staleContext.newPage();
+        await staleVisitor.setCookie(...beforeHandoffCookies);
+        await staleVisitor.goto(base + '/check-in', {waitUntil:'networkidle0'});
+        assert(!(await staleVisitor.$eval('body', el => el.innerText)).includes('Tunggu konfirmasi mekanik'), 'Old guest session retained handoff');
+        await visitor.reload({waitUntil:'networkidle0'});
+        assert((await visitor.$eval('body', el=>el.innerText)).includes('Tunggu konfirmasi mekanik'));
+        assert((await visitor.evaluate(()=>document.documentElement.scrollWidth)) <= 391);
+        await visitor.screenshot({path:join(out,'check-in-waiting-mobile.png'),fullPage:true});
+        await go('/check-ins'); await textHas('QA QR Visitor'); await button('Terima servis');
+        for (const [name, value] of Object.entries({ 'form.vehicle.license_plate': 'D 9010 QA', 'form.vehicle.brand': 'Honda', 'form.vehicle.model': 'Vario', 'form.current_mileage': '50', 'form.complaint': 'QA QR complaint' })) await fill(name, value);
+        assert.equal(await page.$(model('form.identity_verified')), null);
+        await button('Buat servis'); await page.waitForFunction(() => !document.querySelector('dialog[open]'));
+        await visitor.waitForFunction(() => location.pathname === '/portal', {timeout:20000});
+        await visitor.waitForFunction(() => document.body?.innerText.includes('D9010QA'));
+        await staleVisitor.goto(base + '/portal', {waitUntil:'networkidle0'});
+        assert(staleVisitor.url().endsWith('/login'), 'Old guest session redeemed customer login');
+        await staleContext.close();
+        assert((await visitor.$eval('body', el=>el.innerText)).includes('QA QR complaint') === false);
+        await visitor.screenshot({path:join(out,'check-in-auto-dashboard-mobile.png'),fullPage:true});
+        const visitorService = await visitor.evaluateHandle(() => [...document.querySelectorAll('button')].find(el=>el.textContent.trim()==='Detail servis'));
+        await visitorService.asElement().click();
+        await visitor.waitForFunction(() => document.body?.innerText.includes('QA QR complaint'));
+        await visitor.goto(base + '/portal',{waitUntil:'networkidle0'});
+        await visitor.click('#main-content a[href="' + base + '/check-in"]');
+        await visitor.waitForSelector(model('code'));
+        assert.equal(await visitor.$(model('password')), null);
+        await visitor.$eval(model('code'),(el,value)=>{el.value=value;el.dispatchEvent(new Event('input',{bubbles:true}));},activeCode);
+        await visitor.click('button[type="submit"]');
+        await visitor.waitForFunction(()=>document.body?.innerText.includes('Tunggu konfirmasi mekanik'));
+        await visitor.goto(base+'/portal',{waitUntil:'networkidle0'});
+        assert((await visitor.$eval('body',el=>el.innerText)).includes('Check-in masih menunggu'));
+        assert(await visitor.$('button[disabled]'));
+        await go('/check-ins'); await button('Batalkan');
+        await visitor.goto(base+'/portal',{waitUntil:'networkidle0'});
+        assert(!(await visitor.$eval('body',el=>el.innerText)).includes('Check-in masih menunggu'));
+        assert(await visitor.$('a[href="'+base+'/check-in"]'));
+        const qrCustomer = (await state()).customers.find(customer => customer.name === 'QA QR Visitor');
+        const qrOrder = (await state()).orders.find(order => order.customer_id === qrCustomer.id); assert(qrOrder); assert.equal(qrOrder.mechanic_id, 2);
+        // Complete this same check-in order with separate mechanic, cashier and customer sessions.
+        await go(`/services/${qrOrder.id}`);
+        await fill('detail.diagnosis', 'QA check-in worn brake pad');
+        await select('detail.status', 'inspection'); await button('Simpan perubahan');
+        assert.equal((await state()).orders.find(order => order.id === qrOrder.id).status, 'inspection');
+        await go('/__qa/login/owner'); await go(`/services/${qrOrder.id}`);
+        await select('detail.status', 'approved'); await button('Simpan perubahan');
+        await button('Tambah pekerjaan'); await fill('form.name', 'QA Check-in brake replacement');
+        await fill('form.labor_price', '25000.00'); await button('Simpan pekerjaan');
+        await go('/__qa/login/mechanic'); await go(`/services/${qrOrder.id}`);
+        await select('detail.status', 'in_progress'); await button('Simpan perubahan');
+        await button('Ubah'); await select('form.status', 'completed'); await button('Simpan pekerjaan');
+        await select('inventoryItemId', 1); await fill('quantity', '1'); await button('Pakai part');
+        const checkInPhoto = join(out, 'fixture.png');
+        assert(existsSync(checkInPhoto));
+        const checkInUpload = await page.$('input[type=file]'); await checkInUpload.uploadFile(checkInPhoto); await idle();
+        await page.waitForFunction(() => ![...document.querySelectorAll('button')].find(el => el.textContent.trim() === 'Simpan foto')?.disabled);
+        await fill('caption', 'QA check-in service evidence'); await button('Simpan foto');
+        await select('detail.status', 'completed'); await button('Simpan perubahan');
+        assert.equal((await state()).orders.find(order => order.id === qrOrder.id).status, 'completed');
+        await go('/__qa/login/owner'); await go(`/receipts/create?service_order_id=${qrOrder.id}`);
+        await button('Simpan draf');
+        const qrReceiptId = (await state()).receipts.find(receipt => receipt.service_order_id === qrOrder.id)?.id;
+        assert(qrReceiptId); await button('Finalisasi bon');
+        await fill('amount', '40000.00'); await button('Simpan pembayaran');
+        const qrReceipt = (await state()).receipts.find(receipt => receipt.id === qrReceiptId);
+        assert.equal(qrReceipt.grand_total, '40000.00'); assert.equal(qrReceipt.payment_status, 'paid');
+        assert.equal((await state()).stock, 17);
+        await visitor.goto(base + '/portal', {waitUntil: 'networkidle0'});
+        const finalDetail = await visitor.evaluateHandle(() => [...document.querySelectorAll('button')].find(el => el.textContent.trim() === 'Detail servis'));
+        await finalDetail.asElement().click();
+        await visitor.waitForFunction(() => document.body?.innerText.includes('QA check-in service evidence'));
+        assert((await visitor.$eval('body', el => el.innerText)).includes('QA Check-in brake replacement'));
+        const qrEvidenceUrl = await visitor.$eval('a[href*="/portal/documentation/"]', el => el.href);
+        assert.equal(await visitor.evaluate(async url => (await fetch(url)).status, qrEvidenceUrl), 200);
+        assert.equal((await visitor.goto(`${base}/portal/receipts/${qrReceiptId}`, {waitUntil: 'networkidle0'})).status(), 200);
+        const qrPng = await visitor.evaluate(async url => { const response = await fetch(url); return { status: response.status, signature: [...new Uint8Array(await response.arrayBuffer())].slice(0,8) }; }, `${base}/portal/receipts/${qrReceiptId}/image`);
+        assert.equal(qrPng.status, 200); assert.deepEqual(qrPng.signature, [137,80,78,71,13,10,26,10]);
+        await visitor.screenshot({path: join(out, 'check-in-paid-receipt-mobile.png'), fullPage: true});
+        await visitorContext.close();
+        await go('/__qa/login/mechanic');
+        await page.setViewport({ width: 390, height: 844 });
+        for (const path of ['/booking/guest', '/check-ins']) { await go(path); assert((await page.evaluate(() => document.documentElement.scrollWidth)) <= 391); await checkTables(); }
+        await page.screenshot({ path: join(out, 'check-in-queue-mobile.png'), fullPage: true });
+        await page.setViewport({ width: 1440, height: 1000 });
+    });
+    await test('No browser JavaScript or console errors'      , async () => { assert.equal(errors.length, 0, JSON.stringify(errors)); });
     writeFileSync(join(out, 'final-state.json'), JSON.stringify(await state(), null, 2));
 } finally {
     if (browser) await browser.close();
