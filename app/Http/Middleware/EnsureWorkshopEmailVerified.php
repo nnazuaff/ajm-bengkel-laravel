@@ -9,7 +9,7 @@ class EnsureWorkshopEmailVerified extends EnsureEmailIsVerified
 {
     public function handle($request, Closure $next, $redirectToRoute = null)
     {
-        return config('fortify.require_email_verification')
+        return config('fortify.require_email_verification') && ! ($request->user()?->canUseCustomerAccess() ?? false)
             ? parent::handle($request, $next, $redirectToRoute)
             : $next($request);
     }

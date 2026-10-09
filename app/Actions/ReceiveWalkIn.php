@@ -25,6 +25,24 @@ class ReceiveWalkIn
     {
         Gate::forUser($actor)->authorize('create', ServiceOrder::class);
 
+        return $this->intake($actor, $input);
+    }
+
+    /** @param array<string, mixed> $input */
+    public function receiveFromCheckIn(User $actor, array $input): ServiceOrder
+    {
+        Gate::forUser($actor)->authorize('work-services');
+        $actor = User::query()->findOrFail($actor->id);
+        if ($actor->role === Role::Mechanic) {
+            $input['mechanic_id'] = $actor->id;
+        }
+
+        return $this->intake($actor, $input);
+    }
+
+    /** @param array<string, mixed> $input */
+    private function intake(User $actor, array $input): ServiceOrder
+    {
         if (isset($input['customer']['phone']) && is_string($input['customer']['phone'])) {
             $input['customer']['phone'] = WorkshopInput::phone($input['customer']['phone']);
         }
@@ -63,24 +81,16 @@ class ReceiveWalkIn
                 if (! $newVehicle) {
                     $vehicle = Vehicle::query()->lockForUpdate()->whereKey($data['vehicle_id'])->firstOrFail();
                     $customer = Customer::query()->lockForUpdate()->findOrFail($vehicle->customer_id);
+                    if (isset($data['customer_id']) && (int) $data['customer_id'] !== $customer->id) {
+                        throw ValidationException::withMessages(['vehicle_id' => 'Motor bukan milik pelanggan yang dipilih.']);
+                    }
                 } else {
                     $customer = isset($data['customer_id'])
                         ? Customer::query()->lockForUpdate()->whereKey($data['customer_id'])->firstOrFail()
-                        : Customer::withTrashed()->where('phone', $data['customer']['phone'])->lockForUpdate()->first();
-
-                    if ($customer?->trashed()) {
-                        throw ValidationException::withMessages(['customer.phone' => 'Kontak ini diarsipkan. Gunakan data pelanggan aktif.']);
-                    }
-
-                    $customer ??= Customer::create($this->nullOptionals($data['customer']));
-
-                    if (Vehicle::withTrashed()->where('license_plate', $data['vehicle']['license_plate'])->exists()) {
-                        throw ValidationException::withMessages(['vehicle.license_plate' => 'Plat sudah tercatat. Cari dan pilih kendaraan yang ada.']);
-                    }
-
-                    $vehicle = $customer->vehicles()->create([
+                        : app(CustomerResolver::class)->resolve($this->nullOptionals($data['customer']));
+                    $vehicle = app(VehicleResolver::class)->resolve($customer, [
                         ...$this->nullOptionals($data['vehicle']),
-                        'latest_mileage' => $data['current_mileage'],
+                        'current_mileage' => $data['current_mileage'],
                     ]);
                 }
 
@@ -106,7 +116,7 @@ class ReceiveWalkIn
                     'status' => ServiceStatus::Waiting,
                     'received_at' => now(),
                 ]);
-                AuditLog::create([
+                $audit = AuditLog::create([
                     'actor_id' => $actor->id,
                     'action' => 'service.received',
                     'entity_type' => ServiceOrder::class,
@@ -114,8 +124,19 @@ class ReceiveWalkIn
                     'context' => ['source' => ServiceSource::WalkIn->value, 'status' => ServiceStatus::Waiting->value],
                 ]);
 
+                if (! $audit->exists) {
+                    throw new \RuntimeException('Audit gagal disimpan.');
+                }
+
                 return $order;
             }, attempts: 5);
+        } catch (ValidationException $exception) {
+            $errors = [];
+            foreach ($exception->errors() as $key => $messages) {
+                $field = $key === 'phone' ? 'customer.phone' : ($key === 'license_plate' ? 'vehicle.license_plate' : $key);
+                $errors[$field] = $messages;
+            }
+            throw ValidationException::withMessages($errors);
         } catch (UniqueConstraintViolationException) {
             throw ValidationException::withMessages(['vehicle.license_plate' => 'Data telah dicatat oleh petugas lain. Cari kembali plat atau nomor telepon.']);
         }

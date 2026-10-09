@@ -29,6 +29,13 @@ class ConvertBooking
                 if ($existing === null || $existing->booking_id !== $current->id || $existing->source !== ServiceSource::Booking) {
                     throw ValidationException::withMessages(['status' => 'Relasi servis booking tidak konsisten. Hubungi admin.']);
                 }
+                if ($current->customer_id !== null || $current->vehicle_id !== null) {
+                    $vehicle = Vehicle::withTrashed()->whereKey($current->vehicle_id)->lockForUpdate()->first();
+                    if ($vehicle === null || $vehicle->customer_id !== $current->customer_id
+                        || $existing->customer_id !== $current->customer_id || $existing->vehicle_id !== $current->vehicle_id) {
+                        throw ValidationException::withMessages(['vehicle_id' => 'Relasi pelanggan dan motor booking tidak konsisten. Hubungi admin.']);
+                    }
+                }
                 Gate::forUser($actor)->authorize('view', $existing);
 
                 return $existing;
@@ -44,20 +51,33 @@ class ConvertBooking
             ])->validate();
             $link = (bool) ($options['link_account'] ?? false);
             $restore = (bool) ($options['restore_archived'] ?? false);
-            if (($link || $restore) && ! ($options['ownership_verified'] ?? false)) {
-                throw ValidationException::withMessages(['ownership_verified' => 'Konfirmasi identitas, motor, dan hak akses histori pelanggan terlebih dahulu.']);
-            }
             if ($link && $current->submitted_by === null) {
                 throw ValidationException::withMessages(['link_account' => 'Booking ini tidak memiliki akun pelanggan pengirim.']);
             }
 
             // Lock order: booking, vehicle, customer; ReceiveWalkIn uses the same master lock order.
-            $vehicle = Vehicle::withTrashed()->where('license_plate', WorkshopInput::plate($current->license_plate))->lockForUpdate()->first();
-            $customer = $vehicle !== null
-                ? Customer::withTrashed()->whereKey($vehicle->customer_id)->lockForUpdate()->firstOrFail()
-                : Customer::withTrashed()->where('phone', WorkshopInput::phone($current->phone))->lockForUpdate()->first();
-            if ($customer !== null && WorkshopInput::phone($customer->phone) !== WorkshopInput::phone($current->phone)) {
+            $hasRelations = $current->customer_id !== null || $current->vehicle_id !== null;
+            if ($hasRelations) {
+                $vehicle = Vehicle::withTrashed()->whereKey($current->vehicle_id)->lockForUpdate()->first();
+                $customer = Customer::withTrashed()->whereKey($current->customer_id)->lockForUpdate()->first();
+                if ($vehicle === null || $customer === null || $vehicle->customer_id !== $customer->id) {
+                    throw ValidationException::withMessages(['vehicle_id' => 'Relasi pelanggan dan motor booking tidak konsisten. Hubungi admin.']);
+                }
+            } else {
+                $vehicle = Vehicle::withTrashed()->where('license_plate', WorkshopInput::plate($current->license_plate))->lockForUpdate()->first();
+                $customer = $vehicle !== null
+                    ? Customer::withTrashed()->whereKey($vehicle->customer_id)->lockForUpdate()->firstOrFail()
+                    : Customer::withTrashed()->where('phone', WorkshopInput::phone($current->phone))->lockForUpdate()->first();
+            }
+            if (! $hasRelations && $customer !== null && WorkshopInput::phone($customer->phone) !== WorkshopInput::phone($current->phone)) {
                 throw ValidationException::withMessages(['phone' => 'Telepon booking berbeda dari pemilik motor terdaftar. Verifikasi pemilik terlebih dahulu.']);
+            }
+            // A pre-existing trusted account relationship is not a new history claim.
+            if ($hasRelations && $customer->user_id !== null && $customer->user_id === $current->submitted_by) {
+                $link = false;
+            }
+            if (($link || $restore) && ! ($options['ownership_verified'] ?? false)) {
+                throw ValidationException::withMessages(['ownership_verified' => 'Konfirmasi identitas, motor, dan hak akses histori pelanggan terlebih dahulu.']);
             }
             if ($link && $customer !== null && $customer->user_id !== null && $customer->user_id !== $current->submitted_by) {
                 throw ValidationException::withMessages(['link_account' => 'Pelanggan sudah terhubung ke akun lain. Koreksi hubungan melalui menu Pelanggan setelah verifikasi, atau terima tanpa menghubungkan akun.']);
@@ -100,11 +120,15 @@ class ConvertBooking
             $order->source = ServiceSource::Booking;
             $order->save();
             $current->update(['status' => BookingStatus::ConvertedToService]);
-            AuditLog::create([
+            $audit = AuditLog::create([
                 'actor_id' => $actor->id, 'action' => 'booking.converted',
                 'entity_type' => Booking::class, 'entity_id' => $current->id,
                 'context' => ['before' => BookingStatus::Arrived->value, 'after' => BookingStatus::ConvertedToService->value, 'service_order_id' => $order->id, 'source' => ServiceSource::Booking->value],
             ]);
+
+            if (! $audit->exists) {
+                throw new \RuntimeException('Audit gagal disimpan.');
+            }
 
             return $order;
         }, attempts: 5);

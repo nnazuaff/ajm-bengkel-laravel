@@ -13,6 +13,8 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
  * @property int $id
+ * @property int|null $customer_id
+ * @property int|null $vehicle_id
  * @property int|null $submitted_by
  * @property string $booking_number
  * @property string $name
@@ -31,7 +33,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * @property string|null $admin_notes
  * @property BookingStatus $status
  */
-#[Fillable(['booking_number', 'submitted_by', 'name', 'phone', 'email', 'license_plate', 'brand', 'model', 'year', 'current_mileage', 'booking_date', 'arrival_time', 'service_type', 'complaint', 'notes', 'admin_notes', 'status'])]
+#[Fillable(['customer_id', 'vehicle_id', 'booking_number', 'submitted_by', 'name', 'phone', 'email', 'license_plate', 'brand', 'model', 'year', 'current_mileage', 'booking_date', 'arrival_time', 'service_type', 'complaint', 'notes', 'admin_notes', 'status'])]
 class Booking extends Model
 {
     /** @use HasFactory<BookingFactory> */
@@ -41,6 +43,18 @@ class Booking extends Model
     protected function casts(): array
     {
         return ['booking_date' => 'immutable_date', 'status' => BookingStatus::class, 'current_mileage' => 'integer', 'year' => 'integer', 'submitted_by' => 'integer'];
+    }
+
+    /** @return BelongsTo<Customer, $this> */
+    public function customer(): BelongsTo
+    {
+        return $this->belongsTo(Customer::class)->withTrashed();
+    }
+
+    /** @return BelongsTo<Vehicle, $this> */
+    public function vehicle(): BelongsTo
+    {
+        return $this->belongsTo(Vehicle::class)->withTrashed();
     }
 
     /** @return BelongsTo<User, $this> */

@@ -19,7 +19,9 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property Role $role
  * @property int $id
  * @property string $name
- * @property string $email
+ * @property string|null $phone
+ * @property string|null $email
+ * @property CarbonImmutable|null $identity_verified_at
  * @property CarbonImmutable|null $email_verified_at
  * @property string $password
  * @property string|null $two_factor_secret
@@ -29,7 +31,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property CarbonImmutable|null $created_at
  * @property CarbonImmutable|null $updated_at
  */
-#[Fillable(['name', 'email', 'password'])]
+#[Fillable(['name', 'email', 'password', 'phone'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable implements MustVerifyEmail
 {
@@ -50,6 +52,7 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return [
             'email_verified_at' => 'immutable_datetime',
+            'identity_verified_at' => 'immutable_datetime',
             'password' => 'hashed',
             'role' => Role::class,
         ];
@@ -57,12 +60,13 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function canUseCustomerAccess(): bool
     {
-        return ! config('fortify.require_email_verification') || $this->hasVerifiedEmail();
+        return ! config('fortify.require_email_verification') || $this->hasVerifiedEmail()
+            || ($this->role === Role::Customer && $this->identity_verified_at !== null);
     }
 
     public function sendEmailVerificationNotification(): void
     {
-        if (config('fortify.require_email_verification')) {
+        if (config('fortify.require_email_verification') && $this->email !== null) {
             parent::sendEmailVerificationNotification();
         }
     }

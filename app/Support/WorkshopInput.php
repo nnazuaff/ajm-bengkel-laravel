@@ -6,7 +6,7 @@ final class WorkshopInput
 {
     public static function phone(string $value): string
     {
-        $value = str_replace([' ', '-', '(', ')', '+'], '', trim($value));
+        $value = preg_replace('/[\s()+.-]+/u', '', trim($value)) ?? $value;
 
         return str_starts_with($value, '0') ? '62'.substr($value, 1) : $value;
     }

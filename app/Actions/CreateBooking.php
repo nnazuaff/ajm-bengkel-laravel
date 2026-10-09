@@ -10,7 +10,9 @@ use App\Models\User;
 use App\Support\WorkshopInput;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
 
 class CreateBooking
 {
@@ -18,6 +20,25 @@ class CreateBooking
     public function create(User $actor, array $input): Booking
     {
         Gate::forUser($actor)->authorize('create', Booking::class);
+
+        return $this->store($actor, $input);
+    }
+
+    /** @param array<string, mixed> $input */
+    public function guest(array $input): Booking
+    {
+        $key = 'guest-booking:'.request()->ip();
+        if (RateLimiter::tooManyAttempts($key, 5)) {
+            throw ValidationException::withMessages(['throttle' => 'Terlalu banyak permintaan. Coba lagi dalam satu menit.']);
+        }
+        RateLimiter::hit($key, 60);
+
+        return $this->store(null, $input);
+    }
+
+    /** @param array<string, mixed> $input */
+    private function store(?User $actor, array $input): Booking
+    {
         foreach ($input as $key => $value) {
             if (is_string($value)) {
                 $input[$key] = trim($value) === '' ? null : trim($value);
@@ -45,17 +66,42 @@ class CreateBooking
         ])->validate();
 
         return DB::transaction(function () use ($actor, $data): Booking {
+            $currentActor = $actor !== null ? User::findOrFail($actor->id) : null;
+            if ($currentActor !== null) {
+                Gate::forUser($currentActor)->authorize('create', Booking::class);
+            }
+            $customer = $currentActor?->role === Role::Customer
+                ? app(CustomerResolver::class)->forUser($currentActor, $data)
+                : app(CustomerResolver::class)->resolve($data);
+            if ($currentActor?->role === Role::Customer && $customer->user_id === $currentActor->id) {
+                $data = array_replace($data, $customer->only(['name', 'phone', 'email']));
+            }
+            $vehicle = app(VehicleResolver::class)->resolve($customer, $data);
+            // Serialize slot checks on the resolved vehicle, including concurrent submissions.
+            $vehicle = $vehicle->newQuery()->whereKey($vehicle->id)->lockForUpdate()->firstOrFail();
+            if (Booking::query()->where('vehicle_id', $vehicle->id)
+                ->whereDate('booking_date', $data['booking_date'])
+                ->whereIn('arrival_time', [$data['arrival_time'], $data['arrival_time'].':00'])
+                ->whereIn('status', [BookingStatus::Pending, BookingStatus::Confirmed, BookingStatus::Rescheduled, BookingStatus::Arrived])->exists()) {
+                throw ValidationException::withMessages(['arrival_time' => 'Permintaan booking untuk motor dan jadwal ini sudah masuk. Silakan pilih jadwal lain.']);
+            }
             $booking = Booking::create([
+                'customer_id' => $customer->id,
+                'vehicle_id' => $vehicle->id,
                 ...$data,
                 'booking_number' => app(NextServiceNumber::class)->generate('BKG'),
-                'submitted_by' => User::findOrFail($actor->id)->role === Role::Customer ? $actor->id : null,
+                'submitted_by' => $currentActor?->role === Role::Customer ? $currentActor->id : null,
                 'status' => BookingStatus::Pending,
             ]);
-            AuditLog::create([
-                'actor_id' => $actor->id, 'action' => 'booking.created',
+            $audit = AuditLog::create([
+                'actor_id' => $actor?->id, 'action' => 'booking.created',
                 'entity_type' => Booking::class, 'entity_id' => $booking->id,
                 'context' => ['status' => BookingStatus::Pending->value],
             ]);
+
+            if (! $audit->exists) {
+                throw new \RuntimeException('Audit gagal disimpan.');
+            }
 
             return $booking;
         }, attempts: 5);
