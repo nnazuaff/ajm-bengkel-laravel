@@ -53,16 +53,19 @@
                     <p role="status" class="text-sm text-emerald-700 dark:text-emerald-300">{{ session('status') }}
                     </p>
                 @endif
-                @if ($errors->any())
-                    <div role="alert"
-                        class="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800 dark:border-red-800 dark:bg-red-950 dark:text-red-200">
-                        <ul>
-                            @foreach ($errors->all() as $error)
-                                <li>{{ $error }}</li>
-                            @endforeach
-                        </ul>
-                    </div>
-                @endif
+                @php
+                    $inlineErrors = [];
+                    if ($selectedBooking->status->transitions() !== []) {
+                        $inlineErrors = ['detail.status', 'detail.admin_notes'];
+                        if (($detail['status'] ?? '') === 'rescheduled') {
+                            $inlineErrors = [...$inlineErrors, 'detail.booking_date', 'detail.arrival_time'];
+                        }
+                    }
+                    if ($selectedBooking->status === \App\Enums\BookingStatus::Arrived) {
+                        $inlineErrors = [...$inlineErrors, 'detail.ownership_verified', 'detail.link_account', 'detail.restore_archived', 'detail.userId', 'detail.mechanic_id', 'detail.phone', 'detail.license_plate', 'detail.vehicle_id', 'detail.vehicle.license_plate', 'detail.customer.phone', 'detail.current_mileage'];
+                    }
+                @endphp
+                <x-validation-summary :inline="$inlineErrors" />
                 @if ($selectedBooking->status->transitions() !== [])
                     <form wire:submit="saveBooking" class="space-y-5">
                         <div class="grid gap-5 md:grid-cols-3">
@@ -74,6 +77,7 @@
                                         <option value="{{ $status->value }}">{{ $status->label() }}</option>
                                     @endforeach
                                 </select>
+                                <flux:error name="detail.status" />
                             </flux:field>
                             @if (($detail['status'] ?? '') === 'rescheduled')
                                 <flux:input wire:model="detail.booking_date" label="Tanggal jadwal ulang" type="date"
@@ -122,9 +126,9 @@
                                 @endif
                             </p>
                         @endif
-                        @if ($selectedBooking->submitted_by)
+                        @if ($selectedBooking->submitted_by && $selectedBooking->customer?->user_id !== $selectedBooking->submitted_by)
                             <flux:checkbox wire:model="detail.link_account"
-                                label="Hubungkan akun pengirim booking ke pelanggan saat menerima servis" />
+                                label="Konfirmasi akses histori untuk akun pemesan setelah verifikasi identitas" />
                             <p class="text-sm text-zinc-500">Akun ini memperoleh seluruh kendaraan dan histori master
                                 pelanggan. Jangan hubungkan akun orang yang hanya mengantar motor. Hubungan akun lain
                                 tidak diganti otomatis.</p>
@@ -137,9 +141,9 @@
                         @endif
                         <flux:checkbox wire:model="detail.ownership_verified"
                             label="Saya sudah memverifikasi identitas, motor, dan hak akses histori pelanggan secara langsung" />
-                        <flux:error name="detail.ownership_verified" />
-                        <flux:error name="detail.link_account" />
-                        <flux:error name="detail.restore_archived" />
+
+                        @if (!$selectedBooking->submitted_by || $selectedBooking->customer?->user_id === $selectedBooking->submitted_by)<flux:error name="detail.link_account" />@endif
+                        @if (!$matchingCustomer?->trashed() && !$matchingVehicle?->trashed())<flux:error name="detail.restore_archived" />@endif
                         <flux:error name="detail.userId" />
                         <flux:field>
                             <flux:label for="booking-mechanic">Mekanik (opsional)</flux:label>

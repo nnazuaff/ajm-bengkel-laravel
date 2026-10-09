@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Enums\ReceiptStatus;
 use App\Enums\Role;
+use App\Models\CheckIn;
 use App\Models\Customer;
 use App\Models\Receipt;
 use App\Models\ServiceOrder;
@@ -111,6 +112,8 @@ class CustomerPortal extends Component
 
         return view('livewire.customer-portal', [
             'customer' => $customer,
+            'pendingCheckIn' => CheckIn::where('customer_id', $customerId)->whereIn('status', ['waiting', 'processing'])->first(),
+            'checkIns' => CheckIn::where('customer_id', $customerId)->with('serviceOrder')->latest('checked_in_at')->limit(5)->get(),
             'vehicles' => $customer?->vehicles()->withTrashed()->orderBy('license_plate')->get() ?? collect(),
             'vehicle' => $vehicle, 'orders' => $orders, 'order' => $order, 'receipts' => $receipts,
         ]);

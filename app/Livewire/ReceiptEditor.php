@@ -82,7 +82,12 @@ class ReceiptEditor extends Component
 
                 return;
             }
-            abort_unless(in_array($order->status->value, ['completed', 'ready_for_pickup', 'delivered'], true), 422);
+            if (! in_array($order->status->value, ['completed', 'ready_for_pickup', 'delivered'], true)) {
+                session()->flash('status', 'Bon dapat dibuat setelah servis selesai.');
+                $this->redirectRoute('services.detail', ['serviceOrder' => $order->id]);
+
+                return;
+            }
             $this->serviceOrderId = (string) $order->id;
         }
     }

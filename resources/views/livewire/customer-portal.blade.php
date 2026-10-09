@@ -1,16 +1,33 @@
 <section class="mx-auto w-full max-w-6xl space-y-6">
     <header class="workshop-page-heading">
         <div><flux:heading size="xl" level="1">Portal pelanggan</flux:heading><flux:text class="mt-1">Motor, progres pekerjaan, dan bon milik Anda.</flux:text></div>
-        <flux:button :href="route('booking.mine')" variant="primary" wire:navigate>Booking saya</flux:button>
+        <div class="flex flex-wrap gap-3">
+            @if($pendingCheckIn)<flux:button disabled>Check-in masih menunggu</flux:button><flux:button :href="route('check-in')">Lihat check-in aktif</flux:button>
+            @else<flux:button :href="route('check-in')" variant="primary">Check-in</flux:button>@endif
+            <flux:button :href="route('booking.mine')" wire:navigate>Booking saya</flux:button>
+        </div>
     </header>
     <p role="status" wire:loading.delay class="text-sm text-zinc-500">Memuat catatan servis…</p>
     @if (! $customer)
         <div class="workshop-panel space-y-3">
-            <h2 class="text-lg font-semibold">Akun belum terhubung ke data bengkel</h2>
-            <p class="text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">Hubungi staf untuk verifikasi kepemilikan motor dan penautan akun. Kesamaan email atau nomor telepon tidak otomatis memberikan akses ke riwayat servis.</p>
+            <h2 class="text-lg font-semibold">Histori lama menunggu verifikasi identitas</h2>
+            <p class="text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">Booking tetap dapat diajukan. Saat datang, petugas akan memverifikasi identitas dan kepemilikan motor sebelum membuka akses histori lama. Kesamaan nomor telepon saja tidak memberikan akses.</p>
             <p class="text-sm">Anda tetap dapat mengajukan dan memantau permintaan melalui Booking saya.</p>
         </div>
     @else
+        @if($checkIns->isNotEmpty())
+        <section aria-labelledby="checkins-heading" class="space-y-3">
+            <h2 id="checkins-heading" class="text-lg font-semibold">Check-in saya</h2>
+            @foreach($checkIns as $checkIn)
+                <article class="workshop-panel space-y-2" wire:key="portal-checkin-{{ $checkIn->id }}">
+                    <p class="text-sm">{{ $checkIn->checked_in_at->format('d/m/Y H:i') }} · {{ match($checkIn->status->value) { 'waiting'=>'Menunggu konfirmasi mekanik', 'processing'=>'Sedang diproses', 'converted_to_service'=>'Diterima servis', default=>'Dibatalkan' } }}</p>
+                    @if($checkIn->serviceOrder && $checkIn->serviceOrder->customer_id === $customer->id)
+                        <flux:button size="sm" wire:click="selectOrder({{ $checkIn->service_order_id }})" wire:loading.attr="disabled">Lihat hasil check-in · {{ $checkIn->serviceOrder->service_number }}</flux:button>
+                    @endif
+                </article>
+            @endforeach
+        </section>
+        @endif
         <section aria-labelledby="vehicles-heading" class="space-y-3">
             <div class="flex flex-wrap items-center justify-between gap-3"><h2 id="vehicles-heading" class="text-lg font-semibold">Motor saya</h2><flux:button size="sm" wire:click="selectVehicle" wire:loading.attr="disabled">Semua motor</flux:button></div>
             <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">

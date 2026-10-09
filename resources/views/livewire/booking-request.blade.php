@@ -3,7 +3,7 @@
         @if($showForm)
             <form wire:submit="submit" class="space-y-5" aria-labelledby="booking-form-heading" x-init="$nextTick(() => $el.querySelector('input')?.focus())">
                 <flux:heading size="lg" level="2" id="booking-form-heading">Buat booking</flux:heading>
-                <p class="text-sm text-zinc-500">Data ini hanya permintaan booking, bukan perubahan data pelanggan atau motor terdaftar. Jam 08:00–17:00 WIB merupakan pilihan permintaan, bukan konfirmasi slot.</p>
+                <p class="text-sm text-zinc-500">Kontak dan motor digunakan kembali tanpa mengubah catatan lama. Motor baru disimpan saat booking. Jam 08:00–17:00 WIB merupakan pilihan permintaan, bukan konfirmasi slot.</p>
                 <fieldset class="space-y-4">
                     <legend class="mb-2 font-medium">Kontak</legend>
                     <div class="grid gap-5 md:grid-cols-2">

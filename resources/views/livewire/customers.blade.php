@@ -23,20 +23,20 @@
     </div>
 
     <div class="overflow-x-auto rounded-xl border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
-        <table class="w-full text-left text-sm">
+        <table class="workshop-responsive-table w-full text-left text-sm" role="table">
             <caption class="sr-only">Daftar pelanggan bengkel</caption>
-            <thead class="border-b border-zinc-200 bg-zinc-50 text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
-                <tr><th scope="col" class="px-5 py-3 font-medium">Pelanggan</th><th scope="col" class="px-5 py-3 font-medium">Kontak</th><th scope="col" class="px-5 py-3 text-right font-medium">Kendaraan</th><th scope="col" class="px-5 py-3 text-right font-medium">Tindakan</th></tr>
+            <thead role="rowgroup" class="border-b border-zinc-200 bg-zinc-50 text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+                <tr role="row"><th role="columnheader" scope="col" class="px-5 py-3 font-medium">Pelanggan</th><th role="columnheader" scope="col" class="px-5 py-3 font-medium">Kontak</th><th role="columnheader" scope="col" class="px-5 py-3 text-right font-medium">Kendaraan</th><th role="columnheader" scope="col" class="px-5 py-3 text-right font-medium">Tindakan</th></tr>
             </thead>
-            <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
+            <tbody role="rowgroup" class="divide-y divide-zinc-100 dark:divide-zinc-800">
                 @forelse ($customers as $customer)
-                    <tr wire:key="customer-{{ $customer->id }}">
-                        <td class="px-5 py-4 font-medium text-zinc-900 dark:text-white">{{ $customer->name }}</td>
-                        <td class="px-5 py-4"><p>{{ $customer->phone }}</p>@if ($customer->email)<p class="mt-1 text-zinc-500">{{ $customer->email }}</p>@endif</td>
-                        <td class="px-5 py-4 text-right tabular-nums">{{ $customer->vehicles_count }} motor</td>
-                        <td class="px-5 py-4 text-right">
-                            <div class="flex justify-end gap-1">
-                                <flux:button size="sm" variant="ghost" id="edit-customer-{{ $customer->id }}" x-on:click="modalTrigger = $el.id" wire:click="edit({{ $customer->id }})" wire:loading.attr="disabled" aria-label="Edit {{ $customer->name }}">Edit</flux:button><flux:button size="sm" variant="ghost" id="account-customer-{{ $customer->id }}" x-on:click="modalTrigger = $el.id" wire:click="openAccount({{ $customer->id }})" wire:loading.attr="disabled" aria-label="Akses akun {{ $customer->name }}">Akses akun</flux:button>
+                    <tr role="row" wire:key="customer-{{ $customer->id }}">
+                        <td role="cell" data-label="Pelanggan" class="px-5 py-4 font-medium text-zinc-900 dark:text-white">{{ $customer->name }}</td>
+                        <td role="cell" data-label="Kontak" class="px-5 py-4"><p>{{ $customer->phone }}</p>@if ($customer->email)<p class="mt-1 text-zinc-500">{{ $customer->email }}</p>@endif</td>
+                        <td role="cell" data-label="Kendaraan" class="px-5 py-4 text-right tabular-nums">{{ $customer->vehicles_count }} motor</td>
+                        <td role="cell" data-label="Tindakan" class="px-5 py-4 text-right">
+                            <div class="flex flex-wrap justify-end gap-1">
+                                <flux:button size="sm" variant="ghost" id="edit-customer-{{ $customer->id }}" x-on:click="modalTrigger = $el.id" wire:click="edit({{ $customer->id }})" wire:loading.attr="disabled" aria-label="Edit {{ $customer->name }}">Edit</flux:button>
                                 @can('delete', $customer)
                                     <flux:button size="sm" variant="ghost" wire:click="archive({{ $customer->id }})" wire:confirm="Arsipkan pelanggan ini? Data akan disembunyikan dari daftar aktif. Riwayat servis tetap tersimpan. Pemulihan belum tersedia di halaman ini." wire:loading.attr="disabled" wire:target="archive" aria-label="Arsipkan {{ $customer->name }}">Arsipkan</flux:button>
                                 @endcan
@@ -44,7 +44,7 @@
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="4" class="px-5 py-12 text-center text-zinc-500">{{ $search !== '' ? 'Tidak ada pelanggan yang cocok. Coba nama, telepon, atau pelat lain.' : 'Belum ada pelanggan. Tambahkan pelanggan pertama untuk mulai mencatat kendaraan.' }}</td></tr>
+                    <tr role="row"><td role="cell" colspan="4" class="px-5 py-12 text-center text-zinc-500">{{ $search !== '' ? 'Tidak ada pelanggan yang cocok. Coba nama, telepon, atau pelat lain.' : 'Belum ada pelanggan. Tambahkan pelanggan pertama untuk mulai mencatat kendaraan.' }}</td></tr>
                 @endforelse
             </tbody>
         </table>

@@ -41,6 +41,12 @@ class Receipts extends Component
                 $this->authorize('view', $receipt);
                 $this->redirectRoute('receipts.edit', ['receipt' => $receipt->id]);
             } else {
+                if (! in_array($order->status->value, ['completed', 'ready_for_pickup', 'delivered'], true)) {
+                    session()->flash('status', 'Bon dapat dibuat setelah servis selesai.');
+                    $this->redirectRoute('services.detail', ['serviceOrder' => $order->id]);
+
+                    return;
+                }
                 $this->authorize('create', Receipt::class);
                 $this->redirectRoute('receipts.create', ['service_order_id' => $order->id]);
             }

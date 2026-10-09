@@ -24,6 +24,7 @@
             @endif
             <div class="flex flex-wrap items-center gap-5 text-sm">
                 <a href="#cara-booking">Cara booking</a>
+                <a href="{{ route('check-in') }}" wire:navigate>Check-in di bengkel</a>
                 @auth
                     <a href="{{ route('dashboard') }}" class="font-semibold underline underline-offset-4">Buka akun</a>
                 @else
@@ -39,8 +40,8 @@
                 <p class="mb-4 text-sm font-medium uppercase tracking-widest text-zinc-500 dark:text-zinc-400">Servis motor · akun pelanggan</p>
                 <h1 id="home-heading" class="max-w-xl text-4xl font-semibold leading-tight tracking-tight sm:text-5xl">Urus jadwal servis.<br>Lihat hasil pekerjaannya.</h1>
                 <p class="mt-6 max-w-lg text-base leading-relaxed text-zinc-600 dark:text-zinc-400">Ceritakan keluhan motor dan ajukan waktu kedatangan. Setelah akun terhubung dengan data bengkel, progres servis, foto pekerjaan, dan bon bisa Anda lihat di satu tempat.</p>
-                <a href="{{ route('booking.mine') }}" class="mt-8 inline-flex min-h-11 items-center rounded-lg bg-zinc-900 px-5 py-3 text-sm font-semibold text-white dark:bg-white dark:text-zinc-900">Ajukan booking servis</a>
-                <p class="mt-3 text-sm text-zinc-500 dark:text-zinc-400">Akun diperlukan. Permintaan menunggu konfirmasi bengkel.</p>
+                <a href="{{ route('booking.guest') }}" class="mt-8 inline-flex min-h-11 items-center rounded-lg bg-zinc-900 px-5 py-3 text-sm font-semibold text-white dark:bg-white dark:text-zinc-900">Ajukan booking servis</a>
+                <p class="mt-3 text-sm text-zinc-500 dark:text-zinc-400">Tanpa akun. Permintaan menunggu konfirmasi bengkel.</p>
             </div>
             <aside class="rounded-xl border border-zinc-200 bg-white p-6 sm:p-8 dark:border-zinc-800 dark:bg-zinc-900" aria-labelledby="transparency-heading">
                 <h2 id="transparency-heading" class="text-xl font-semibold">Catatan servis, bukan sekadar kabar.</h2>
@@ -55,9 +56,9 @@
         <section id="cara-booking" class="border-t border-zinc-200 py-10 dark:border-zinc-800" aria-labelledby="booking-heading">
             <h2 id="booking-heading" class="text-2xl font-semibold">Sebelum datang ke bengkel</h2>
             <ol class="mt-6 grid gap-6 md:grid-cols-3">
-                <li><p class="text-sm text-zinc-500">01 / Akun</p><h3 class="mt-2 font-semibold">Masuk atau daftar</h3><p class="mt-2 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">Gunakan akun sendiri dan verifikasi email untuk mengajukan booking.</p></li>
+                <li><p class="text-sm text-zinc-500">01 / Akun</p><h3 class="mt-2 font-semibold">Pilih cara booking</h3><p class="mt-2 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">Booking tanpa akun atau masuk untuk menggunakan data kendaraan tersimpan.</p></li>
                 <li><p class="text-sm text-zinc-500">02 / Permintaan</p><h3 class="mt-2 font-semibold">Isi data motor dan keluhan</h3><p class="mt-2 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">Pilih tanggal dan waktu kedatangan yang ingin Anda ajukan.</p></li>
-                <li><p class="text-sm text-zinc-500">03 / Konfirmasi</p><h3 class="mt-2 font-semibold">Periksa status booking</h3><p class="mt-2 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">Lihat konfirmasi atau perubahan jadwal pada halaman Booking saya.</p></li>
+                <li><p class="text-sm text-zinc-500">03 / Konfirmasi</p><h3 class="mt-2 font-semibold">Periksa status booking</h3><p class="mt-2 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">Petugas menghubungi kontak booking. Jika memakai akun, status juga tersedia di Booking saya.</p></li>
             </ol>
         </section>
         @if (filled($workshop->phone) || filled($workshop->address))

@@ -69,7 +69,9 @@
                 </form>
             @endif
             @can('manage-workshop')
+                @if($selectedOrder->receipt || in_array($selectedOrder->status->value,['completed','ready_for_pickup','delivered'],true))
                 <flux:button :href="route('receipts.index', ['service_order_id' => $selectedOrder->id])" wire:navigate>Bon servis</flux:button>
+                @else<p class="text-sm text-zinc-500">Bon dapat dibuat setelah servis selesai.</p>@endif
             @endcan
             <livewire:service-parts :service-order-id="$selectedOrder->id" :key="'parts-'.$selectedOrder->id.'-'.$selectedOrder->status->value" />
             <livewire:service-photos :service-order-id="$selectedOrder->id" :key="'photos-'.$selectedOrder->id.'-'.$selectedOrder->status->value" />

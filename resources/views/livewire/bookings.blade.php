@@ -20,20 +20,20 @@
     </div>
     <p role="status" class="text-sm text-zinc-500">{{ $bookings->total() }} booking <span wire:loading wire:target="search,statusFilter,dateFilter">· Memuat…</span></p>
     <div class="overflow-x-auto rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
-        <table class="workshop-table">
+        <table class="workshop-responsive-table workshop-table" role="table">
             <caption class="sr-only">Antrean booking bengkel</caption>
-            <thead><tr><th scope="col">Booking / jadwal</th><th scope="col">Motor</th><th scope="col">Pemesan</th><th scope="col">Status</th><th scope="col">Tindakan</th></tr></thead>
-            <tbody>
+            <thead role="rowgroup"><tr role="row"><th role="columnheader" scope="col">Booking / jadwal</th><th role="columnheader" scope="col">Motor</th><th role="columnheader" scope="col">Pemesan</th><th role="columnheader" scope="col">Status</th><th role="columnheader" scope="col">Tindakan</th></tr></thead>
+            <tbody role="rowgroup">
                 @forelse ($bookings as $booking)
-                    <tr wire:key="booking-{{ $booking->id }}">
-                        <td><p class="font-medium">{{ $booking->booking_number }}</p><p class="mt-1 whitespace-nowrap text-xs text-zinc-500">{{ $booking->booking_date->format('d/m/Y') }} · {{ substr($booking->arrival_time, 0, 5) }} WIB</p></td>
-                        <td><p class="font-semibold">{{ $booking->license_plate }}</p><p class="mt-1 text-zinc-500">{{ $booking->brand }} {{ $booking->model }}</p></td>
-                        <td><p>{{ $booking->name }}</p><p class="mt-1 text-zinc-500">{{ $booking->phone }}</p></td>
-                        <td class="whitespace-nowrap"><flux:badge :color="$booking->status->color()" size="sm">{{ $booking->status->label() }}</flux:badge></td>
-                        <td><flux:button size="sm" variant="ghost" wire:click="openBooking({{ $booking->id }})" x-on:booking-review-closed.window="if ($event.detail.id === {{ $booking->id }}) $nextTick(() => $el.focus())" wire:loading.attr="disabled" aria-label="Tinjau {{ $booking->booking_number }}">Tinjau</flux:button></td>
+                    <tr role="row" wire:key="booking-{{ $booking->id }}">
+                        <td role="cell" data-label="Booking / jadwal"><p class="font-medium">{{ $booking->booking_number }}</p><p class="mt-1 whitespace-nowrap text-xs text-zinc-500">{{ $booking->booking_date->format('d/m/Y') }} · {{ substr($booking->arrival_time, 0, 5) }} WIB</p></td>
+                        <td role="cell" data-label="Motor"><p class="font-semibold">{{ $booking->license_plate }}</p><p class="mt-1 text-zinc-500">{{ $booking->brand }} {{ $booking->model }}</p></td>
+                        <td role="cell" data-label="Pemesan"><p>{{ $booking->name }}</p><p class="mt-1 text-zinc-500">{{ $booking->phone }}</p></td>
+                        <td role="cell" data-label="Status" class="whitespace-nowrap"><flux:badge :color="$booking->status->color()" size="sm">{{ $booking->status->label() }}</flux:badge></td>
+                        <td role="cell" data-label="Tindakan"><flux:button size="sm" variant="ghost" wire:click="openBooking({{ $booking->id }})" x-on:booking-review-closed.window="if ($event.detail.id === {{ $booking->id }}) $nextTick(() => $el.focus())" wire:loading.attr="disabled" aria-label="Tinjau {{ $booking->booking_number }}">Tinjau</flux:button></td>
                     </tr>
                 @empty
-                    <tr><td colspan="5" class="py-12 text-center text-zinc-500">{{ $search !== '' || $statusFilter !== '' || $dateFilter !== '' ? 'Tidak ada booking yang cocok. Ubah pencarian atau filter.' : 'Belum ada permintaan booking.' }}</td></tr>
+                    <tr role="row"><td role="cell" colspan="5" class="py-12 text-center text-zinc-500">{{ $search !== '' || $statusFilter !== '' || $dateFilter !== '' ? 'Tidak ada booking yang cocok. Ubah pencarian atau filter.' : 'Belum ada permintaan booking.' }}</td></tr>
                 @endforelse
             </tbody>
         </table>

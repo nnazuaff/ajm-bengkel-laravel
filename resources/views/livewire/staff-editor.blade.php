@@ -3,7 +3,7 @@
     @if ($showForm)
     <form wire:submit="save" class="space-y-5" aria-labelledby="staff-form-heading" x-init="$nextTick(() => $el.querySelector('input')?.focus())">
         <flux:heading size="lg" level="2" id="staff-form-heading">{{ $editingId ? 'Edit staf' : 'Tambah staf' }}</flux:heading>
-        @if ($errors->any())<div role="alert" class="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800 dark:border-red-800 dark:bg-red-950 dark:text-red-200"><ul>@foreach ($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>@endif
+        <x-validation-summary :inline="$editingId ? ['name', 'role'] : ['name', 'role', 'email', 'password', 'password_confirmation']" />
         <div class="grid gap-5 md:grid-cols-2">
             <flux:input wire:model="name" label="Nama staf" required maxlength="255" autocomplete="name" />
             <flux:select wire:model="role" label="Peran" required><option value="mechanic">Mekanik</option><option value="admin">Admin / Kasir</option><option value="owner">Pemilik</option></flux:select>

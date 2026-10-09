@@ -4,15 +4,38 @@
         <flux:button href="{{ route('receipts.index') }}" wire:navigate>Kembali ke daftar bon</flux:button>
     </header>
     @if(session('status'))<p role="status" class="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200">{{ session('status') }}</p>@endif
-    @if($errors->any())<div role="alert" class="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800 dark:bg-red-950 dark:text-red-200"><ul class="list-inside list-disc">@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>@endif
+    @php
+        $inlineErrors = [];
+        if (!$selected || $selected->status === \App\Enums\ReceiptStatus::Draft) {
+            $inlineErrors = ['discount', 'notes', 'items'];
+            if (!$selected) {
+                $inlineErrors[] = 'service_order_id';
+                if (!$serviceOrderId) $inlineErrors[] = 'customer_id';
+            }
+            foreach ($items as $index => $line) {
+                if (!is_array($line) || !in_array($line['type'] ?? null, ['product', 'custom'], true)) continue;
+                $inlineErrors[] = "items.$index.quantity";
+                foreach ($line['type'] === 'product' ? ['inventory_item_id'] : ['description', 'unit_price'] as $field) {
+                    $inlineErrors[] = "items.$index.$field";
+                }
+            }
+        }
+        if ($selected?->status === \App\Enums\ReceiptStatus::Final) {
+            $inlineErrors = [...$inlineErrors, 'amount', 'method', 'paid_at', 'reference'];
+        }
+        if ($selected && $selected->status !== \App\Enums\ReceiptStatus::Voided && auth()->user()->can('void', $selected)) {
+            $inlineErrors[] = 'reason';
+        }
+    @endphp
+    <x-validation-summary :inline="$inlineErrors" />
     <div class="space-y-5 rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-700 dark:bg-zinc-900">
         <div class="flex flex-wrap justify-between gap-3"><flux:heading level="2">{{ $selected?->receipt_number ?? 'Bon baru' }} @if($selected) · {{ $selected->status->label() }}@endif</flux:heading></div>
         @if(!$selected || $selected->status === \App\Enums\ReceiptStatus::Draft)
         <form wire:submit="save" class="space-y-5">
             @if(!$selected)
             <div class="grid gap-4 md:grid-cols-2">
-                <flux:select wire:model.live="serviceOrderId" label="Sumber transaksi"><option value="">Penjualan langsung (tanpa servis)</option>@foreach($services as $service)<option value="{{ $service->id }}">{{ $service->service_number }} · {{ $service->customer->name }}</option>@endforeach</flux:select>
-                @if(!$serviceOrderId)<flux:select wire:model="customerId" label="Pelanggan"><option value="">Umum</option>@foreach($customers as $customer)<option value="{{ $customer->id }}">{{ $customer->name }} · {{ $customer->phone }}</option>@endforeach</flux:select>@endif
+                <flux:select wire:model.live="serviceOrderId" error:name="service_order_id" label="Sumber transaksi"><option value="">Penjualan langsung (tanpa servis)</option>@foreach($services as $service)<option value="{{ $service->id }}">{{ $service->service_number }} · {{ $service->customer->name }}</option>@endforeach</flux:select>
+                @if(!$serviceOrderId)<flux:select wire:model="customerId" error:name="customer_id" label="Pelanggan"><option value="">Umum</option>@foreach($customers as $customer)<option value="{{ $customer->id }}">{{ $customer->name }} · {{ $customer->phone }}</option>@endforeach</flux:select>@endif
             </div>
             @endif
             @if($serviceOrderId)<flux:text>Pekerjaan selesai dan spare part aktif diambil otomatis dari servis saat finalisasi. Tambahan manual ditulis di bawah.</flux:text>@endif
@@ -20,6 +43,7 @@
             <div class="grid gap-4 md:grid-cols-2"><flux:input wire:model.live.debounce.300ms="productSearch" label="Cari produk" placeholder="Nama atau SKU" type="search" maxlength="120"/><flux:select wire:model.live="categoryId" label="Kategori produk"><option value="">Semua kategori</option>@foreach($categories as $category)<option value="{{ $category->id }}">{{ $category->name }}</option>@endforeach</flux:select></div>
             @endif
             <div class="space-y-3">
+                <flux:error name="items" />
                 @foreach($items as $index => $line)
                 @continue(!is_array($line) || !in_array($line['type'] ?? null, ['product', 'custom'], true))
                 <div wire:key="receipt-line-{{ $editingId ?? 'new' }}-{{ $index }}" class="grid items-end gap-3 rounded-lg border border-zinc-200 p-3 md:grid-cols-12 dark:border-zinc-700">
@@ -43,11 +67,11 @@
         </form>
         @endif
         @if($selected)
-        <div class="overflow-x-auto"><table class="w-full text-left text-sm"><caption class="sr-only">Baris bon tersimpan</caption><thead><tr class="border-b border-zinc-200 dark:border-zinc-700"><th class="py-3">Deskripsi</th><th class="p-3 text-right">Jumlah</th><th class="p-3 text-right">Harga (Rp)</th><th class="p-3 text-right">Total (Rp)</th></tr></thead><tbody>@foreach($selected->items as $line)<tr class="border-b border-zinc-100 dark:border-zinc-800"><td class="py-3">{{ $line->description }}</td><td class="p-3 text-right">{{ $line->quantity }}</td><td class="p-3 text-right tabular-nums">{{ $line->unit_price }}</td><td class="p-3 text-right tabular-nums">{{ $line->total }}</td></tr>@endforeach</tbody></table></div>
+        <div class="overflow-x-auto"><table class="workshop-responsive-table w-full text-left text-sm" role="table"><caption class="sr-only">Baris bon tersimpan</caption><thead role="rowgroup"><tr role="row" class="border-b border-zinc-200 dark:border-zinc-700"><th role="columnheader" class="py-3">Deskripsi</th><th role="columnheader" class="p-3 text-right">Jumlah</th><th role="columnheader" class="p-3 text-right">Harga (Rp)</th><th role="columnheader" class="p-3 text-right">Total (Rp)</th></tr></thead><tbody role="rowgroup">@foreach($selected->items as $line)<tr role="row" class="border-b border-zinc-100 dark:border-zinc-800"><td role="cell" data-label="Deskripsi" class="py-3">{{ $line->description }}</td><td role="cell" data-label="Jumlah" class="p-3 text-right">{{ $line->quantity }}</td><td role="cell" data-label="Harga (Rp)" class="p-3 text-right tabular-nums">{{ $line->unit_price }}</td><td role="cell" data-label="Total (Rp)" class="p-3 text-right tabular-nums">{{ $line->total }}</td></tr>@endforeach</tbody></table></div>
         <dl class="grid gap-3 rounded-lg bg-zinc-50 p-4 text-sm sm:grid-cols-4 dark:bg-zinc-800"><div><dt>Subtotal</dt><dd class="font-semibold">Rp {{ $selected->subtotal }}</dd></div><div><dt>Diskon</dt><dd>Rp {{ $selected->discount }}</dd></div><div><dt>Total</dt><dd class="font-semibold">Rp {{ $selected->grand_total }}</dd></div><div><dt>{{ $selected->payment_status->label() }}</dt><dd>Sisa Rp {{ $selected->status->value === 'voided' ? '0.00' : bcsub($selected->grand_total,$paid,2) }}</dd></div></dl>
         @if($selected->status !== \App\Enums\ReceiptStatus::Draft)<div class="flex flex-wrap gap-3"><flux:button href="{{ route('receipts.show',$selected) }}" target="_blank">Lihat / cetak bon</flux:button><flux:button href="{{ route('receipts.image',$selected) }}">Unduh PNG</flux:button></div>@endif
         @if($selected->status === \App\Enums\ReceiptStatus::Final)
-        <form wire:submit="pay" class="space-y-4 border-t border-zinc-200 pt-5 dark:border-zinc-700"><flux:heading level="3">Catat pembayaran</flux:heading><div class="grid gap-4 md:grid-cols-4"><flux:input wire:model="amount" label="Jumlah (Rp)" inputmode="decimal" required/><flux:select wire:model="method" label="Metode">@foreach(\App\Enums\PaymentMethod::cases() as $option)<option value="{{ $option->value }}">{{ $option->label() }}</option>@endforeach</flux:select><flux:input wire:model="paidAt" label="Tanggal pembayaran" type="datetime-local" required/><flux:input wire:model="reference" label="Referensi (opsional)" maxlength="255"/></div><flux:button type="submit" variant="primary" wire:loading.attr="disabled" wire:confirm="Catat pembayaran ini? Pastikan jumlah dan metode benar.">Simpan pembayaran</flux:button></form>
+        <form wire:submit="pay" class="space-y-4 border-t border-zinc-200 pt-5 dark:border-zinc-700"><flux:heading level="3">Catat pembayaran</flux:heading><div class="grid gap-4 md:grid-cols-4"><flux:input wire:model="amount" label="Jumlah (Rp)" inputmode="decimal" required/><flux:select wire:model="method" label="Metode">@foreach(\App\Enums\PaymentMethod::cases() as $option)<option value="{{ $option->value }}">{{ $option->label() }}</option>@endforeach</flux:select><flux:input wire:model="paidAt" error:name="paid_at" label="Tanggal pembayaran" type="datetime-local" required/><flux:input wire:model="reference" label="Referensi (opsional)" maxlength="255"/></div><flux:button type="submit" variant="primary" wire:loading.attr="disabled" wire:confirm="Catat pembayaran ini? Pastikan jumlah dan metode benar.">Simpan pembayaran</flux:button></form>
         @endif
         @if($selected->payments->isNotEmpty())<div class="space-y-3"><flux:heading level="3">Riwayat pembayaran</flux:heading>@foreach($selected->payments as $payment)<div class="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-zinc-200 p-3 text-sm dark:border-zinc-700"><p>{{ $payment->paid_at->format('d/m/Y H:i') }} · {{ $payment->method->label() }} · Rp {{ $payment->amount }} · {{ $payment->reference }} @if($payment->reversed_at)<strong>Dibalik: {{ $payment->reversal_reason }}</strong>@endif</p>@can('reversePayment',$selected)@if(!$payment->reversed_at)<flux:button size="sm" wire:click="reversePayment({{ $payment->id }})" wire:confirm="Balik pembayaran dalam pembukuan? Tidak ada transfer refund bank otomatis. Isi alasan koreksi di bawah." wire:loading.attr="disabled">Balik pembayaran</flux:button>@endif@endcan</div>@endforeach</div>@endif
         @can('void',$selected)

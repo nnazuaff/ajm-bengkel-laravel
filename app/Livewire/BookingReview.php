@@ -111,7 +111,7 @@ class BookingReview extends Component
     private function fillDetail(Booking $booking): void
     {
         $this->detail = [
-            'link_account' => $booking->submitted_by !== null, 'restore_archived' => false, 'ownership_verified' => false,
+            'link_account' => $booking->submitted_by !== null && $booking->customer?->user_id !== $booking->submitted_by, 'restore_archived' => false, 'ownership_verified' => false,
             'status' => $booking->status->value,
             'booking_date' => $booking->booking_date->toDateString(),
             'arrival_time' => substr($booking->arrival_time, 0, 5),

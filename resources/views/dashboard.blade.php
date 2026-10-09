@@ -36,20 +36,20 @@
         <section class="space-y-3" aria-labelledby="latest-service-heading">
             <flux:heading id="latest-service-heading" level="2">Servis terbaru</flux:heading>
             <div class="overflow-x-auto rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
-                <table class="workshop-table">
+                <table class="workshop-responsive-table workshop-table" role="table">
                     <caption class="sr-only">Enam order servis terbaru</caption>
-                    <thead><tr><th scope="col">Order</th><th scope="col">Motor</th><th scope="col">Pelanggan</th><th scope="col">Mekanik</th><th scope="col">Status</th></tr></thead>
-                    <tbody>
+                    <thead role="rowgroup"><tr role="row"><th role="columnheader" scope="col">Order</th><th role="columnheader" scope="col">Motor</th><th role="columnheader" scope="col">Pelanggan</th><th role="columnheader" scope="col">Mekanik</th><th role="columnheader" scope="col">Status</th></tr></thead>
+                    <tbody role="rowgroup">
                         @forelse ($latestOrders as $order)
-                            <tr>
-                                <td><a href="{{ route('services.detail', $order->id) }}" wire:navigate class="font-medium underline underline-offset-4">{{ $order->service_number }}</a><p class="mt-1 text-xs text-zinc-500">{{ $order->received_at->format('d/m/Y H:i') }}</p></td>
-                                <td><p class="font-medium">{{ $order->vehicle->license_plate }}</p><p class="mt-1 text-zinc-500">{{ $order->vehicle->brand }} {{ $order->vehicle->model }}</p></td>
-                                <td>{{ $order->customer->name }}</td>
-                                <td>{{ $order->mechanic?->name ?? 'Belum ditugaskan' }}</td>
-                                <td><flux:badge size="sm" :color="$order->status->color()">{{ $order->status->label() }}</flux:badge></td>
+                            <tr role="row">
+                                <td role="cell" data-label="Order"><a href="{{ route('services.detail', $order->id) }}" wire:navigate class="font-medium underline underline-offset-4">{{ $order->service_number }}</a><p class="mt-1 text-xs text-zinc-500">{{ $order->received_at->format('d/m/Y H:i') }}</p></td>
+                                <td role="cell" data-label="Motor"><p class="font-medium">{{ $order->vehicle->license_plate }}</p><p class="mt-1 text-zinc-500">{{ $order->vehicle->brand }} {{ $order->vehicle->model }}</p></td>
+                                <td role="cell" data-label="Pelanggan">{{ $order->customer->name }}</td>
+                                <td role="cell" data-label="Mekanik">{{ $order->mechanic?->name ?? 'Belum ditugaskan' }}</td>
+                                <td role="cell" data-label="Status"><flux:badge size="sm" :color="$order->status->color()">{{ $order->status->label() }}</flux:badge></td>
                             </tr>
                         @empty
-                            <tr><td colspan="5" class="!py-10 text-center text-zinc-500">Belum ada servis{{ auth()->user()->role === \App\Enums\Role::Mechanic ? ' yang ditugaskan kepada Anda' : '' }}.</td></tr>
+                            <tr role="row"><td role="cell" colspan="5" class="!py-10 text-center text-zinc-500">Belum ada servis{{ auth()->user()->role === \App\Enums\Role::Mechanic ? ' yang ditugaskan kepada Anda' : '' }}.</td></tr>
                         @endforelse
                     </tbody>
                 </table>

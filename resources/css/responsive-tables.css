@@ -1,0 +1,88 @@
+/* One DOM for desktop tables and labelled mobile cards. */
+@media screen and (max-width: 767px) {
+    .workshop-responsive-table {
+        display: block;
+        width: 100%;
+        min-width: 0;
+    }
+
+    .workshop-responsive-table thead {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+    }
+
+    .workshop-responsive-table tbody {
+        display: grid;
+        gap: 1rem;
+        width: 100%;
+        padding: 0.75rem;
+    }
+
+    .workshop-responsive-table tbody tr {
+        display: block;
+        min-width: 0;
+        border: 1px solid #e4e4e7;
+        border-radius: 0.75rem;
+        background: #fff;
+        overflow: hidden;
+    }
+
+    .dark .workshop-responsive-table tbody tr {
+        border-color: #3f3f46;
+        background: #18181b;
+    }
+
+    .workshop-responsive-table tbody td {
+        display: block;
+        width: 100%;
+        max-width: none;
+        min-width: 0;
+        padding: 0.75rem 1rem;
+        text-align: start;
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
+
+    .workshop-responsive-table tbody td::before {
+        content: attr(data-label);
+        display: block;
+        margin-bottom: 0.375rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #52525b;
+    }
+
+    .dark .workshop-responsive-table tbody td::before {
+        color: #a1a1aa;
+    }
+
+    .workshop-responsive-table tbody td[colspan]::before {
+        display: none;
+    }
+
+    .workshop-responsive-table tbody td:last-child {
+        border-bottom: 0;
+    }
+
+    .workshop-responsive-table tbody td > * {
+        max-width: 100%;
+        min-width: 0;
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
+
+    .workshop-responsive-table tbody td [data-flux-button] {
+        min-height: 2.75rem;
+        white-space: normal;
+    }
+
+    .workshop-responsive-table tbody td > .flex {
+        flex-wrap: wrap;
+        justify-content: flex-start;
+    }
+}

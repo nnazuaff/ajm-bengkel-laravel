@@ -16,6 +16,7 @@
                 @can('customer-portal')
                     <flux:sidebar.group heading="Akun pelanggan" data-sidebar-section="customer">
                         <flux:sidebar.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard', 'portal')" wire:navigate>Dashboard</flux:sidebar.item>
+                        <flux:sidebar.item icon="qr-code" :href="route('check-in')">Check-in</flux:sidebar.item>
                         <flux:sidebar.item icon="calendar" :href="route('booking.mine')" :current="request()->routeIs('booking.mine')" wire:navigate>Booking saya</flux:sidebar.item>
                     </flux:sidebar.group>
                 @else
@@ -26,6 +27,7 @@
 
                 @can('work-services')
                     <flux:sidebar.group heading="Operasional" data-sidebar-section="operations">
+                        <flux:sidebar.item icon="qr-code" :href="route('check-ins.index')" :current="request()->routeIs('check-ins.*')" wire:navigate>Customer check-in</flux:sidebar.item>
                         @can('manage-workshop')
                             <flux:sidebar.item icon="calendar" :href="route('bookings.index')" :current="request()->routeIs('bookings.*')" wire:navigate>Booking</flux:sidebar.item>
                         @endcan

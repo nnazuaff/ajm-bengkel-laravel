@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\CheckInQrController;
 use App\Http\Controllers\CustomerDocumentationController;
 use App\Http\Controllers\CustomerReceiptController;
 use App\Http\Controllers\DashboardController;
@@ -9,12 +10,15 @@ use App\Http\Controllers\ReportExportController;
 use App\Http\Controllers\ServiceDocumentationController;
 use App\Livewire\AuditLogs;
 use App\Livewire\Bookings;
+use App\Livewire\CheckIns;
 use App\Livewire\CustomerBooking;
 use App\Livewire\CustomerPortal;
 use App\Livewire\Customers;
+use App\Livewire\GuestBooking;
 use App\Livewire\Inventory;
 use App\Livewire\Mechanics;
 use App\Livewire\Payments;
+use App\Livewire\PublicCheckIn;
 use App\Livewire\ReceiptEditor;
 use App\Livewire\Receipts;
 use App\Livewire\Reports;
@@ -25,9 +29,13 @@ use App\Livewire\WorkshopSettings;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', PublicHomeController::class)->name('home');
+Route::livewire('booking/guest', GuestBooking::class)->name('booking.guest');
+Route::livewire('check-in', PublicCheckIn::class)->name('check-in');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', DashboardController::class)->name('dashboard');
+    Route::livewire('check-ins', CheckIns::class)->middleware('can:work-services')->name('check-ins.index');
+    Route::get('check-ins/qr', CheckInQrController::class)->middleware('can:work-services')->name('check-ins.qr');
 
     Route::livewire('portal', CustomerPortal::class)->middleware('can:customer-portal')->name('portal');
     Route::get('portal/receipts/{receipt}', [CustomerReceiptController::class, 'show'])->middleware('can:customer-portal')->name('customer.receipts.show');

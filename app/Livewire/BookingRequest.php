@@ -41,8 +41,10 @@ class BookingRequest extends Component
         $this->reset('form');
         $this->resetValidation();
         $this->showForm = true;
-        $this->form['name'] = $actor->name;
-        $this->form['email'] = $actor->email;
+        $customer = Customer::query()->where('user_id', $actor->id)->first();
+        $this->form['name'] = $customer !== null ? $customer->name : $actor->name;
+        $this->form['phone'] = $customer !== null ? $customer->phone : ($actor->phone ?? '');
+        $this->form['email'] = $customer !== null ? ($customer->email ?? $actor->email) : $actor->email;
         $this->form['booking_date'] = now()->toDateString();
     }
 

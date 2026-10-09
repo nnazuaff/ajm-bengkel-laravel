@@ -27,6 +27,8 @@ class AuditLogs extends Component
         'booking.rejected' => 'Booking ditolak', 'booking.cancelled' => 'Booking dibatalkan',
         'booking.rescheduled' => 'Booking dijadwal ulang', 'booking.arrived' => 'Pelanggan tiba',
         'booking.converted' => 'Booking diterima sebagai servis',
+        'check_in.code_rotated' => 'Kode check-in diganti', 'check_in.code_disabled' => 'Kode check-in dinonaktifkan',
+        'check_in.converted' => 'Check-in diterima servis', 'check_in.cancelled' => 'Check-in dibatalkan',
         'inventory.created' => 'Barang dibuat', 'inventory.updated' => 'Barang diperbarui',
         'inventory.archived' => 'Barang diarsipkan', 'inventory_category.created' => 'Kategori barang dibuat',
         'inventory.price_changed' => 'Harga barang diperbarui', 'inventory.stock_changed' => 'Stok berubah',

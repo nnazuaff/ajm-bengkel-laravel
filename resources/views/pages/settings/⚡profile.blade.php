@@ -21,7 +21,7 @@ new #[Title('Profile settings')] class extends Component {
     public function mount(): void
     {
         $this->name = Auth::user()->name;
-        $this->email = Auth::user()->email;
+        $this->email = Auth::user()->email ?? '';
     }
 
     /**
@@ -49,7 +49,7 @@ new #[Title('Profile settings')] class extends Component {
      */
     public function resendVerificationNotification(): void
     {
-        if (! config('fortify.require_email_verification')) {
+        if (! config('fortify.require_email_verification') || Auth::user()->email === null) {
             return;
         }
 
@@ -69,7 +69,7 @@ new #[Title('Profile settings')] class extends Component {
     #[Computed]
     public function hasUnverifiedEmail(): bool
     {
-        return config('fortify.require_email_verification')
+        return config('fortify.require_email_verification') && Auth::user()->email !== null
             && Auth::user() instanceof MustVerifyEmail && ! Auth::user()->hasVerifiedEmail();
     }
 

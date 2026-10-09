@@ -18,6 +18,8 @@
                 :placeholder="__('Nama lengkap Anda')"
             />
 
+            <flux:input name="phone" label="Telepon / WhatsApp" :value="old('phone')" type="tel" required maxlength="30" autocomplete="tel" placeholder="081234567890" />
+
             <flux:input
                 name="email"
                 :label="__('Email')"
