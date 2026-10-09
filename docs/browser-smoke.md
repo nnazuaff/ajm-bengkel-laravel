@@ -4,6 +4,7 @@ Run from repository root:
 
 ```sh
 npm install --prefix .hermes/qa/deps --no-audit --no-fund puppeteer-core
+npm install --prefix .hermes/qa/qr-deps --no-audit --no-fund jsqr @resvg/resvg-js
 # Reuses existing public/build; build separately only when needed.
 # npm run build
 node scripts/browser-smoke.mjs
@@ -21,7 +22,9 @@ Only the runner's own PHP server/browser are stopped in `finally`. Artifacts rem
 
 ## Coverage
 
-42 independent checks: public homepage, unauthenticated guard, fixture token guard; 13 owner/admin routes desktop and all routes plus public home at 390px; customer creation, vehicle creation, registered walk-in intake, mechanic assignment, diagnosis and legal transitions; completed job, spare-part stock/movement; actual file input upload and photo save; service completion, receipt draft/finalization/payment; HTTP receipt/PNG signature; direct sale stock deduction; own customer portal, another customer's receipt/image denied, customer admin denied; booking submission, mobile portal and console errors.
+Current revision: 56 checks, zero console errors; pre-handoff guest session rotates, old-cookie browser cannot redeem login; same check-in order exercised through mechanic diagnosis/work/part/photo/completion, cashier finalization/payment, customer private evidence/web receipt/PNG; separate visitor browser waits/reloads, mechanic confirms identity/intake, visitor polls and automatically authenticates to own dashboard then opens own service details; includes guest master creation, encrypted-code mechanic/public check-in, queue intake, mobile forms, actual SVG QR independent decode (URL only, no active code). QR decoding dependencies are scratch-only, not production dependencies. Physical phone scanning/public-network access still requires a reachable deployment URL.
+
+Original 42-check baseline: public homepage, unauthenticated guard, fixture token guard; 13 owner/admin routes desktop and all routes plus public home at 390px; customer creation, vehicle creation, registered walk-in intake, mechanic assignment, diagnosis and legal transitions; completed job, spare-part stock/movement; actual file input upload and photo save; service completion, receipt draft/finalization/payment; HTTP receipt/PNG signature; direct sale stock deduction; own customer portal, another customer's receipt/image denied, customer admin denied; booking submission, mobile portal and console errors.
 
 All mutations except explicit initial fixtures occur through real Chromium DOM interactions and actual Livewire requests. Assertions also inspect the isolated database through the guarded read-only QA state endpoint. Intentional 403/404 authorization console messages are excluded narrowly; all HTTP errors remain in the results. Exit status is nonzero on failed checks. Unexpected runtime setup failures also fail the command.
 

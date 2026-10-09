@@ -67,13 +67,33 @@ Owner terakhir tidak dapat dinonaktifkan; penugasan aktif melindungi akses mekan
 
 ## Portal pelanggan
 
-Root publik menampilkan identitas yang dikonfigurasi dan tautan booking/login.
-Registrasi selalu role customer dan hanya membuat akun users; master customers
-memerlukan telepon dan dibuat/dipakai saat penerimaan servis. /portal hanya role
-customer; email wajib mengikuti konfigurasi. Admin dapat menghubungkan akun pada
-form Terima servis setelah verifikasi langsung, atau lewat Pengaitan akun /customers
-untuk koreksi manual. Konfirmasi diwajibkan dan perubahan tercatat audit. Telepon/email booking
-bukan bukti kepemilikan dan tidak menyebabkan linking otomatis.
+Root publik menampilkan identitas bengkel, guest booking `/booking/guest`, login,
+dan check-in `/check-in`. Registrasi membuat User role customer dan membuat master
+Customer baru secara atomik. Kecocokan dengan Customer offline tidak membuka histori
+lama; konfirmasi identitas dan kepemilikan tetap dilakukan saat penerimaan.
+
+Check-in publik sekaligus membuat akun memakai email unik, password dan konfirmasi.
+Akun lama tidak ditimpa: pelanggan yang sudah punya akun harus login. Dashboard dan
+sidebar pelanggan menyediakan Check-in dengan kontak dari akun, bukan input bebas.
+Satu Customer hanya boleh mempunyai satu check-in waiting/processing, tanpa batas
+umur; setelah diterima menjadi servis atau dibatalkan, boleh mengajukan lagi.
+
+Petugas `/check-ins` generate kode enam digit, berlaku 24 jam, dapat diputar atau
+dinonaktifkan. QR berisi URL saja; kode diberikan kepada pelanggan yang hadir.
+Halaman menunggu polling setiap lima detik dan tetap bekerja setelah refresh.
+Mekanik menerima kendaraan/KM/keluhan; akun baru yang belum mempunyai histori lama
+tidak memerlukan checkbox tambahan. Klaim Customer offline lama tetap memerlukan
+konfirmasi identitas, kepemilikan motor dan browser pelanggan di hadapan petugas.
+Konversi order, aktivasi akun dan audit atomik. Akun identity_verified_at boleh
+mengakses portal tanpa mengisi email_verified_at palsu; email transport tetap
+memerlukan konfigurasi untuk verifikasi email/reset password.
+
+Browser awal dapat memakai handoff sekali sebelum kedaluwarsa 24 jam untuk login
+otomatis setelah servis diterima. Password pilihan pelanggan memungkinkan login
+ulang melalui halaman login biasa. Handoff bukan link publik dan tidak disimpan
+sebagai plaintext di CheckIn. Histori hanya dari Customer yang terhubung tepercaya.
+Aksi Akses akun telah dihapus dari daftar pelanggan; linking legacy dipertahankan
+internal untuk kompatibilitas, bukan langkah wajib operasi biasa.
 
 Portal membaca kendaraan, progres/histori, diagnosis, pekerjaan, part, foto, bon dan
 status pembayaran sendiri. Bon draft tidak dibagikan. Foto privat tidak memakai

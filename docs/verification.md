@@ -1,9 +1,9 @@
 # Verifikasi integrasi admin + customer/public
 
-Status: scope core admin + public/customer terimplementasi dan lolos gate backend/MySQL/browser.
+Status: core + check-in akun otomatis terimplementasi; verifikasi terbaru 811 tests /3499 assertions, 56 browser checks, lint/PHPStan/TypeScript/build/MySQL passed. Migration000022–000028 terpasang; sesudahnya DB demo lokal dibangun ulang dengan migrate:fresh atas persetujuan eksplisit pengguna. QA hanya memakai schema/SQLite terisolasi. Review independen sesi/password ditutup dengan 16 tests /99 assertions lulus; QR melalui HP dilaporkan lulus oleh pengguna. Bagian berikut adalah checkpoint historis admin modal sebelum revisi customer; angka di bawah tidak menggantikan hasil terbaru. Ownership existing customer tidak dibuka hanya dengan phone. Lihat customer-flow-audit.md.
 Bukan deployment production atau sertifikasi semua permutasi penggunaan.
 
-## Hasil parent aktual
+## Checkpoint historis admin modal (sebelum revisi customer)
 
 - php artisan test --compact: 687 passed, 2793 assertions.
 - composer lint:check: passed.

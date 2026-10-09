@@ -1,12 +1,20 @@
 # Domain final AJM Bengkel
 
-AGENTS.md adalah spesifikasi. Schema dibangun bertahap; 19 migration domain setelah
-starter authentication. Booking snapshot bukan customer master otomatis.
+AGENTS.md adalah spesifikasi umum; docs/customer-flow-revision.md dan revisi flow
+yang disetujui menjadi acuan Customer/booking/check-in. Schema dibangun bertahap.
+Booking terbaru resolve Customer/Vehicle atomik dengan FK dan snapshot transaksi;
+legacy snapshot-only dipertahankan dan backfill hanya jika kepemilikan cocok.
 
 ```mermaid
 erDiagram
     USER ||--o| CUSTOMER : trusted_account
     CUSTOMER ||--o{ VEHICLE : owns
+    CUSTOMER ||--o{ BOOKING : requested_for
+    VEHICLE ||--o{ BOOKING : requested_vehicle
+    CUSTOMER ||--o{ CHECK_IN : arrived
+    USER o|--o{ CHECK_IN : customer_account
+    USER o|--o{ CHECK_IN : processed_by
+    CHECK_IN o|--o| SERVICE_ORDER : received_once
     CUSTOMER ||--o{ SERVICE_ORDER : serviced_for
     VEHICLE ||--o{ SERVICE_ORDER : history
     USER ||--o{ BOOKING : submitted_by
@@ -34,6 +42,9 @@ erDiagram
 
 - Intake: customer/vehicle reuse atau create, mileage, nomor dan order satu transaksi.
 - Booking: lock request lalu intake; unique booking_id dan status konversi idempotent.
+- Check-in: validasi kode aktif dengan lock, resolve Customer dan blok duplicate pending;
+  User baru/handoff ikut transaksi. Konversi memverifikasi klaim histori lama, membuat
+  order, mengaktifkan akun dan audit atomik. Handoff one-use dan role/ownership saat ini.
 - Jobs: lock order lalu job; assigned mechanic authorization; price decimal string.
 - Parts: lock order, optional receipt, part, inventory. Snapshot harga/nama; ledger/audit
   atomik. Return idempotent; cancellation mengembalikan part dalam transaksi status.
@@ -55,7 +66,8 @@ UI. Stock movements immutable melalui model. Receipt snapshot identitas/item/har
 mencegah perubahan master mengubah bon final. Logo lama tetap disimpan karena
 snapshot bon lama dapat merujuk file tersebut. Part returned_at dan payment reversed_at
 menyimpan reversal eksplisit. Customer portal memeriksa owner saat ini per request;
-link akun tidak dibuat otomatis dari informasi kontak.
+kontak tidak menjadi bukti kepemilikan histori lama. Akun baru boleh linked ke master
+baru; penggunaan master offline lama menunggu verifikasi petugas.
 
 ## Simplifikasi sengaja
 
