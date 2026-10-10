@@ -1,6 +1,6 @@
 <section class="mx-auto w-full max-w-6xl space-y-6">
     <header class="workshop-page-heading">
-        <div><flux:heading size="xl" level="1">Portal pelanggan</flux:heading><flux:text class="mt-1">Motor, progres pekerjaan, dan bon milik Anda.</flux:text></div>
+        <div><flux:heading size="xl" level="1">Portal pelanggan</flux:heading><flux:text class="mt-1">Cek motor kamu, lihat progres servis, lalu buka foto pekerjaan dan bon yang sudah tersedia.</flux:text></div>
         <div class="flex flex-wrap gap-3">
             @if($pendingCheckIn)<flux:button disabled>Check-in masih menunggu</flux:button><flux:button :href="route('check-in')">Lihat check-in aktif</flux:button>
             @else<flux:button :href="route('check-in')" variant="primary">Check-in</flux:button>@endif
@@ -11,8 +11,8 @@
     @if (! $customer)
         <div class="workshop-panel space-y-3">
             <h2 class="text-lg font-semibold">Histori lama menunggu verifikasi identitas</h2>
-            <p class="text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">Booking tetap dapat diajukan. Saat datang, petugas akan memverifikasi identitas dan kepemilikan motor sebelum membuka akses histori lama. Kesamaan nomor telepon saja tidak memberikan akses.</p>
-            <p class="text-sm">Anda tetap dapat mengajukan dan memantau permintaan melalui Booking saya.</p>
+            <p class="text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">Kamu tetap bisa mengajukan booking. Saat kamu datang, petugas perlu memverifikasi identitas dan kepemilikan motor sebelum membuka akses riwayat servis lama. Nomor telepon yang sama saja tidak memberi akses ke riwayat servis.</p>
+            <p class="text-sm">Buka Booking saya untuk mengajukan jadwal dan mengecek status permintaan kamu.</p>
         </div>
     @else
         @if($checkIns->isNotEmpty())
@@ -39,7 +39,7 @@
                         <flux:button size="sm" wire:click="selectVehicle({{ $motor->id }})" wire:loading.attr="disabled" aria-label="Riwayat {{ $motor->license_plate }}">Lihat riwayat</flux:button>
                     </article>
                 @empty
-                    <p class="workshop-empty-state sm:col-span-2 lg:col-span-3">Belum ada motor terdaftar pada data pelanggan Anda.</p>
+                    <p class="workshop-empty-state sm:col-span-2 lg:col-span-3">Belum ada motor yang tercatat di akun kamu. Saat datang, minta petugas memeriksa data motor kamu.</p>
                 @endforelse
             </div>
         </section>
@@ -87,13 +87,13 @@
                         @foreach ($order->receipt->payments as $payment)<p class="mt-2 text-sm">{{ $payment->paid_at->format('d/m/Y H:i') }} · {{ $payment->method->label() }} · Rp {{ $payment->amount }} @if ($payment->reversed_at) · Dibalik dalam pembukuan @endif</p>@endforeach
                         @if ($order->receipt->void_reason)<p class="mt-2 break-words text-sm">Alasan pembatalan: {{ $order->receipt->void_reason }}</p>@endif
                         <div class="mt-3 flex flex-wrap gap-3"><flux:button size="sm" :href="route('customer.receipts.show', $order->receipt)">Lihat bon</flux:button><flux:button size="sm" :href="route('customer.receipts.image', $order->receipt)">Unduh PNG</flux:button></div>
-                    @else <p class="mt-2 text-sm text-zinc-500">Bon belum diterbitkan. Biaya pekerjaan di atas bukan total tagihan final.</p> @endif
+                    @else <p class="mt-2 text-sm text-zinc-500">Bon belum diterbitkan. Biaya pekerjaan di atas belum menjadi total tagihan akhir.</p> @endif
                 </section>
             </article>
         @endif
         <section aria-labelledby="receipts-heading" class="space-y-3"><h2 id="receipts-heading" class="text-lg font-semibold">Semua bon saya</h2><p class="text-sm text-zinc-500">Termasuk pembelian suku cadang tanpa servis.</p>
             @forelse ($receipts as $receipt)<article wire:key="portal-receipt-{{ $receipt->id }}" class="workshop-panel flex flex-wrap items-center justify-between gap-3"><div><h3 class="font-semibold">{{ $receipt->receipt_number }}</h3><p class="mt-1 text-sm">{{ $receipt->transaction_date->format('d/m/Y') }} · {{ $receipt->status->label() }} · {{ $receipt->payment_status->label() }}</p><p class="mt-1 font-medium">Rp {{ $receipt->grand_total }}</p></div><div class="flex flex-wrap gap-3"><flux:button size="sm" :href="route('customer.receipts.show', $receipt)" aria-label="Lihat {{ $receipt->receipt_number }}">Lihat bon</flux:button><flux:button size="sm" :href="route('customer.receipts.image', $receipt)" aria-label="Unduh PNG {{ $receipt->receipt_number }}">Unduh PNG</flux:button></div></article>
-            @empty <p class="workshop-empty-state">Belum ada bon yang diterbitkan untuk akun Anda.</p> @endforelse
+            @empty <p class="workshop-empty-state">Belum ada bon yang diterbitkan untuk akun kamu.</p> @endforelse
             {{ $receipts->links() }}
         </section>
     @endif

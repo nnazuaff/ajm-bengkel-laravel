@@ -1,6 +1,6 @@
 <x-layouts::auth :title="__('Daftar pelanggan')">
     <div class="flex flex-col gap-5">
-        <x-auth-header :title="__('Daftar akun pelanggan')" :description="__('Pendaftaran ini khusus pelanggan. Akun staf dikelola oleh bengkel.')" />
+        <x-auth-header :title="__('Daftar akun pelanggan')" :description="__('Isi data kamu untuk membuat akun pelanggan. Akun staf tetap dikelola oleh bengkel.')" />
 
         <x-auth-session-status class="text-center" :status="session('status')" />
 
@@ -15,7 +15,7 @@
                 required
                 autofocus
                 autocomplete="name"
-                :placeholder="__('Nama lengkap Anda')"
+                :placeholder="__('Nama lengkap kamu')"
             />
 
             <flux:input name="phone" label="Telepon / WhatsApp" :value="old('phone')" type="tel" required maxlength="30" autocomplete="tel" placeholder="081234567890" />

@@ -2,7 +2,7 @@
     <header class="flex flex-wrap items-start justify-between gap-4">
         <div>
         <flux:heading size="xl" level="1">Booking saya</flux:heading>
-        <flux:text class="mt-1">Ajukan jadwal kedatangan. Bengkel akan mengonfirmasi permintaan Anda.</flux:text>
+        <flux:text class="mt-1">Pilih Buat booking untuk mengajukan jadwal kedatangan kamu. Tunggu konfirmasi dari AJM sebelum datang.</flux:text>
         </div>
         <flux:button variant="primary" icon="plus" x-on:booking-request-closed.window="$nextTick(() => $el.focus())" wire:click="createBooking" wire:loading.attr="disabled">Buat booking</flux:button>
     </header>
@@ -11,7 +11,7 @@
     @endif
     <livewire:booking-request />
     <div class="space-y-4">
-        <flux:heading level="2">Permintaan Anda</flux:heading>
+        <flux:heading level="2">Permintaan kamu</flux:heading>
         @forelse ($bookings as $booking)
             <article wire:key="my-booking-{{ $booking->id }}" class="workshop-panel space-y-3">
                 <header class="flex flex-wrap items-center justify-between gap-3">
@@ -26,7 +26,7 @@
                 @endif
             </article>
         @empty
-            <p class="workshop-panel text-sm text-zinc-500">Belum ada booking. Klik Buat booking untuk mengajukan jadwal.</p>
+            <p class="workshop-panel text-sm text-zinc-500">Belum ada booking. Pilih Buat booking untuk mengajukan jadwal kedatangan kamu.</p>
         @endforelse
         {{ $bookings->links() }}
     </div>

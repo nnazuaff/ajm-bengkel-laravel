@@ -36,7 +36,7 @@ it('does not render empty admin groups for mechanics', function () {
 
 it('keeps customer navigation separate from all staff groups', function () {
     $this->actingAs(User::factory()->create())->get('/portal')->assertOk()
-        ->assertSee('data-sidebar-section="customer"', false)->assertSee('Booking saya')
+        ->assertSee('ajm-customer-nav', false)->assertSee('Booking saya')
         ->assertDontSee('data-sidebar-section="operations"', false)->assertDontSee('data-sidebar-section="masters"', false)
         ->assertDontSee('data-sidebar-section="finance"', false)->assertDontSee('data-sidebar-section="management"', false);
 });

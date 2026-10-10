@@ -9,6 +9,7 @@
         <flux:sidebar sticky collapsible="mobile" class="border-e border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
             <flux:sidebar.header>
                 <x-app-logo :sidebar="true" href="{{ route('dashboard') }}" wire:navigate />
+                <x-theme-toggle class="hidden lg:inline-flex" />
                 <flux:sidebar.toggle class="lg:hidden" icon="x-mark" :aria-label="__('Tutup navigasi')" />
             </flux:sidebar.header>
 
@@ -66,9 +67,10 @@
 
         <flux:header class="border-b border-zinc-200 bg-white px-4 lg:hidden dark:border-zinc-800 dark:bg-zinc-900">
             <flux:sidebar.toggle icon="bars-2" inset="left" :aria-label="__('Buka navigasi')" />
-            <x-app-logo class="ms-2" href="{{ route('dashboard') }}" wire:navigate />
+            <x-app-logo class="ms-2 !w-auto !max-w-32" href="{{ route('dashboard') }}" wire:navigate />
             <flux:spacer />
 
+            <x-theme-toggle class="me-2" />
             <flux:dropdown position="bottom" align="end">
                 <flux:profile
                     :initials="auth()->user()->initials()"

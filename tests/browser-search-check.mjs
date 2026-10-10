@@ -56,7 +56,9 @@ try {
     }
     let handler;
     let inputs = [];
-    runInNewContext(readFileSync(join(output, 'app.js'), 'utf8'), {
+    // Theme/menu modules are exercised by real-browser QA, not these search DOM mocks.
+    const searchCode = readFileSync(join(output, 'app.js'), 'utf8').replace(/^import ['"]\.\/public-home['"];\s*/u, '');
+    runInNewContext(searchCode, {
         Element, HTMLElement, HTMLInputElement,
         document: {
             addEventListener(type, callback) {

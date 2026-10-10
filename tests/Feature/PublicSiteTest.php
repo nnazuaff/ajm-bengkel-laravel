@@ -12,7 +12,7 @@ it('serves a responsive public home using only configured workshop identity', fu
     $this->get('/')->assertOk()->assertSee('Bengkel Uji')->assertSee('628112345678')
         ->assertSee('Alamat terkonfigurasi')->assertSee('Tanpa akun')
         ->assertSee(route('booking.guest'))->assertSee(route('login'))->assertSee(route('register'))
-        ->assertSee('name="viewport"', false)->assertSee('md:grid-cols-2', false)
+        ->assertSee('name="viewport"', false)->assertSee('ajm-hero', false)
         ->assertDontSee('08:00')->assertDontSee('Rp 50.000');
 });
 

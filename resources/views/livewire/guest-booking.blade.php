@@ -1,7 +1,7 @@
 <section class="space-y-6">
-    <header><flux:heading size="xl" level="1">Booking tanpa akun</flux:heading><flux:text class="mt-2">Isi kontak, motor, dan jadwal kedatangan. Permintaan menunggu konfirmasi bengkel.</flux:text></header>
+    <header><flux:heading size="xl" level="1">Booking tanpa akun</flux:heading><flux:text class="mt-2">Isi kontak kamu, data motor, dan jadwal kedatangan. Tulis gejala yang terasa dan kapan munculnya. Tunggu konfirmasi dari AJM sebelum datang.</flux:text></header>
     @if ($submitted)
-        <div role="status" class="workshop-panel space-y-3"><h2 class="text-lg font-semibold">Booking berhasil diajukan</h2><p>Petugas akan mengonfirmasi melalui kontak yang Anda tulis. Data kendaraan akan diperiksa saat datang.</p><flux:button href="{{ route('home') }}" wire:navigate>Kembali ke beranda</flux:button></div>
+        <div role="status" class="workshop-panel space-y-3"><h2 class="text-lg font-semibold">Booking berhasil diajukan</h2><p>Petugas akan menghubungi kamu lewat kontak yang kamu isi untuk mengonfirmasi jadwal. Saat kamu datang, petugas akan memeriksa data motor.</p><flux:button href="{{ route('home') }}" wire:navigate>Kembali ke beranda</flux:button></div>
     @else
         <form wire:submit="submit" class="workshop-panel space-y-6">
             <x-validation-summary :inline="['form.name', 'form.phone', 'form.email', 'form.license_plate', 'form.brand', 'form.model', 'form.year', 'form.current_mileage', 'form.booking_date', 'form.arrival_time', 'form.service_type', 'form.complaint', 'form.notes']" />
@@ -26,6 +26,6 @@
             </div></fieldset>
             <div class="flex flex-wrap items-center justify-end gap-3"><span wire:loading wire:target="submit" role="status">Mengirim…</span><flux:button type="submit" variant="primary" wire:loading.attr="disabled">Ajukan booking</flux:button></div>
         </form>
-        <p class="text-sm text-zinc-600 dark:text-zinc-400">Punya akun? <a href="{{ route('booking.mine') }}" class="underline" wire:navigate>Booking dengan kendaraan tersimpan</a>. Akun memberi akses histori setelah identitas terverifikasi.</p>
+        <p class="text-sm text-zinc-600 dark:text-zinc-400">Punya akun? <a href="{{ route('booking.mine') }}" class="underline" wire:navigate>Booking dengan kendaraan tersimpan</a>. Untuk melihat riwayat servis lama, petugas perlu memverifikasi identitas kamu dan kepemilikan motor.</p>
     @endif
 </section>

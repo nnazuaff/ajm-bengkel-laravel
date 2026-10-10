@@ -9,7 +9,9 @@ export default defineConfig({
             input: [
                 'resources/css/app.css',
                 'resources/css/responsive-tables.css',
+                'resources/css/public-home.css',
                 'resources/js/app.ts',
+                'resources/js/public-home.ts',
             ],
             refresh: true,
             fonts: [

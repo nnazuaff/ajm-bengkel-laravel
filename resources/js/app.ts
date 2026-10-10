@@ -1,3 +1,5 @@
+import './public-home';
+
 document.addEventListener('keydown', (event) => {
     if (
         event.defaultPrevented || event.isComposing || event.repeat ||

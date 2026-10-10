@@ -1,77 +1,109 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" class="dark">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="Ajukan booking servis motor dan lihat riwayat pekerjaan melalui akun pelanggan.">
     <title>{{ $workshop->name }}</title>
     @include('partials.favicon')
+    @include('partials.theme')
     @fonts
-    @vite(['resources/css/app.css', 'resources/js/app.ts'])
-    @fluxAppearance
+    @vite(['resources/css/app.css', 'resources/css/public-home.css', 'resources/js/app.ts'])
 </head>
-<body class="min-h-screen bg-zinc-50 font-sans text-zinc-900 antialiased dark:bg-zinc-950 dark:text-zinc-100">
-    <a href="#main-content" class="workshop-skip-link">Langsung ke konten</a>
-    <header class="border-b border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
-        <nav aria-label="Navigasi utama" class="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-5 py-5 sm:px-8">
-            @if ($workshop->horizontalLogoUrl())
-                <x-app-logo href="{{ route('home') }}" />
-            @else
-                <a href="{{ route('home') }}" class="flex min-w-0 items-center gap-3 font-semibold" data-workshop-brand>
-                    @if ($logoUrl)<img src="{{ $logoUrl }}" alt="" width="44" height="44" class="h-11 w-11 object-contain">@endif
-                    <span class="break-words">AJM Bengkel</span>
-                </a>
-            @endif
-            <div class="flex flex-wrap items-center gap-5 text-sm">
-                <a href="#cara-booking">Cara booking</a>
-                <a href="{{ route('check-in') }}" wire:navigate>Check-in di bengkel</a>
-                @auth
-                    <a href="{{ route('dashboard') }}" class="font-semibold underline underline-offset-4">Buka akun</a>
-                @else
-                    <a href="{{ route('login') }}">Masuk</a>
-                    @if (Route::has('register'))<a href="{{ route('register') }}" class="font-semibold underline underline-offset-4">Daftar akun</a>@endif
-                @endauth
+<body class="ajm-home ajm-customer">
+    @php
+        $customerAccount = auth()->user()?->role === \App\Enums\Role::Customer;
+        $bookingUrl = route($customerAccount ? 'booking.mine' : 'booking.guest');
+    @endphp
+    <a href="#main-content" class="ajm-skip">Langsung ke konten</a>
+    <x-customer-navbar />
+    <main id="main-content" tabindex="-1">
+        <section class="ajm-container ajm-hero" aria-labelledby="home-heading">
+            <div class="ajm-hero-copy">
+                <p class="ajm-intro">{{ $workshop->name }}</p>
+                <h1 id="home-heading">Motor mulai nggak enak dipakai?</h1>
+                <p class="ajm-hero-description">Bawa ke AJM. Kami cek dulu, lalu bahas bagian yang perlu dikerjakan.</p>
+                <div class="ajm-actions">
+                    <a href="{{ $bookingUrl }}" class="ajm-button ajm-button-primary" data-home-booking>Booking servis</a>
+                    @if ($whatsappUrl)<a href="{{ $whatsappUrl }}" class="ajm-button" target="_blank" rel="noopener noreferrer">Chat AJM</a>@endif
+                </div>
             </div>
-        </nav>
-    </header>
-    <main id="main-content" class="mx-auto max-w-6xl px-5 sm:px-8">
-        <section class="grid gap-10 py-12 md:grid-cols-2 md:items-center md:py-20" aria-labelledby="home-heading">
+            <figure class="ajm-hero-photo">
+                <img src="{{ asset('images/workshop/ajm-front-960.webp') }}"
+                    srcset="{{ asset('images/workshop/ajm-front-640.webp') }} 640w, {{ asset('images/workshop/ajm-front-960.webp') }} 960w, {{ asset('images/workshop/ajm-front-1280.webp') }} 1280w"
+                    sizes="(max-width: 899px) calc(100vw - 40px), 650px" width="1280" height="720"
+                    alt="Bagian depan bengkel Ahad Jaya Motor" fetchpriority="high" decoding="async">
+            </figure>
+        </section>
+
+        <section id="layanan" class="ajm-container ajm-section ajm-services" aria-labelledby="services-heading">
             <div>
-                <p class="mb-4 text-sm font-medium uppercase tracking-widest text-zinc-500 dark:text-zinc-400">Servis motor · akun pelanggan</p>
-                <h1 id="home-heading" class="max-w-xl text-4xl font-semibold leading-tight tracking-tight sm:text-5xl">Urus jadwal servis.<br>Lihat hasil pekerjaannya.</h1>
-                <p class="mt-6 max-w-lg text-base leading-relaxed text-zinc-600 dark:text-zinc-400">Ceritakan keluhan motor dan ajukan waktu kedatangan. Setelah akun terhubung dengan data bengkel, progres servis, foto pekerjaan, dan bon bisa Anda lihat di satu tempat.</p>
-                <a href="{{ route('booking.guest') }}" class="mt-8 inline-flex min-h-11 items-center rounded-lg bg-zinc-900 px-5 py-3 text-sm font-semibold text-white dark:bg-white dark:text-zinc-900">Ajukan booking servis</a>
-                <p class="mt-3 text-sm text-zinc-500 dark:text-zinc-400">Tanpa akun. Permintaan menunggu konfirmasi bengkel.</p>
+                <h2 id="services-heading">Yang bisa kami bantu</h2>
+                <p>Rem bunyi, tarikan berat, atau starter susah? Bilang kapan terasa, nanti kami cek dari situ.</p>
             </div>
-            <aside class="rounded-xl border border-zinc-200 bg-white p-6 sm:p-8 dark:border-zinc-800 dark:bg-zinc-900" aria-labelledby="transparency-heading">
-                <h2 id="transparency-heading" class="text-xl font-semibold">Catatan servis, bukan sekadar kabar.</h2>
-                <dl class="mt-6 divide-y divide-zinc-200 dark:divide-zinc-800">
-                    <div class="py-4"><dt class="font-medium">Progres dan riwayat</dt><dd class="mt-1 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">Keluhan, diagnosis, pekerjaan, dan suku cadang yang dicatat bengkel.</dd></div>
-                    <div class="py-4"><dt class="font-medium">Dokumentasi pekerjaan</dt><dd class="mt-1 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">Foto yang tersedia hanya dapat diakses melalui akun pemilik data.</dd></div>
-                    <div class="py-4"><dt class="font-medium">Bon digital</dt><dd class="mt-1 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">Rincian biaya, status pembayaran, dan unduhan gambar bon setelah diterbitkan.</dd></div>
-                </dl>
-                <p class="mt-4 border-t border-zinc-200 pt-4 text-sm text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">Baru membuat akun? Hubungi staf untuk verifikasi kepemilikan motor. Data tidak ditautkan otomatis.</p>
-            </aside>
+            <dl class="ajm-service-list">
+                <div><dt>Tune up</dt><dd>Cek busi, filter, dan setelan saat langsam mulai nggak stabil.</dd></div>
+                <div><dt>Ganti oli</dt><dd>Ganti oli sesuai kebutuhan motor, sekalian lihat takaran dan rembesnya.</dd></div>
+                <div><dt>Rem</dt><dd>Cek kampas, kaliper, atau tromol kalau rem bunyi atau terasa dalam.</dd></div>
+                <div><dt>Rantai</dt><dd>Bersihkan dan setel rantai. Kondisi gir ikut kami lihat.</dd></div>
+                <div><dt>Kelistrikan</dt><dd>Cek aki, pengisian, dan jalur kabel saat starter atau lampu melemah.</dd></div>
+            </dl>
         </section>
-        <section id="cara-booking" class="border-t border-zinc-200 py-10 dark:border-zinc-800" aria-labelledby="booking-heading">
-            <h2 id="booking-heading" class="text-2xl font-semibold">Sebelum datang ke bengkel</h2>
-            <ol class="mt-6 grid gap-6 md:grid-cols-3">
-                <li><p class="text-sm text-zinc-500">01 / Akun</p><h3 class="mt-2 font-semibold">Pilih cara booking</h3><p class="mt-2 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">Booking tanpa akun atau masuk untuk menggunakan data kendaraan tersimpan.</p></li>
-                <li><p class="text-sm text-zinc-500">02 / Permintaan</p><h3 class="mt-2 font-semibold">Isi data motor dan keluhan</h3><p class="mt-2 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">Pilih tanggal dan waktu kedatangan yang ingin Anda ajukan.</p></li>
-                <li><p class="text-sm text-zinc-500">03 / Konfirmasi</p><h3 class="mt-2 font-semibold">Periksa status booking</h3><p class="mt-2 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">Petugas menghubungi kontak booking. Jika memakai akun, status juga tersedia di Booking saya.</p></li>
-            </ol>
+
+        <section id="bengkel" class="ajm-container ajm-section" aria-labelledby="workshop-heading">
+            <div class="ajm-section-heading">
+                <h2 id="workshop-heading">Motornya kami lihat dulu</h2>
+                <p>Kalau ada bagian yang perlu dibuka atau diganti, pekerjaan dan biayanya dibicarakan dulu.</p>
+            </div>
+            <div class="ajm-work-photos">
+                <figure>
+                    <img src="{{ asset('images/workshop/ajm-work-960.webp') }}"
+                        srcset="{{ asset('images/workshop/ajm-work-640.webp') }} 640w, {{ asset('images/workshop/ajm-work-960.webp') }} 960w"
+                        sizes="(max-width: 767px) calc(100vw - 40px), 700px" width="960" height="540" loading="lazy" decoding="async" alt="Motor yang sedang dibongkar dan dikerjakan di bengkel AJM">
+                    <figcaption>Pengecekan dan pengerjaan di bengkel.</figcaption>
+                </figure>
+                <figure>
+                    <img src="{{ asset('images/workshop/ajm-workshop-640.webp') }}"
+                        srcset="{{ asset('images/workshop/ajm-workshop-640.webp') }} 640w, {{ asset('images/workshop/ajm-workshop-960.webp') }} 960w"
+                        sizes="(max-width: 767px) calc(100vw - 40px), 480px" width="640" height="360" loading="lazy" decoding="async" alt="Motor dan perlengkapan di dalam bengkel AJM">
+                    <figcaption>Motor dan perlengkapan servis di AJM.</figcaption>
+                </figure>
+            </div>
+            <div id="cara-booking" class="ajm-visit">
+                <div><h3>Mau datang di waktu tertentu?</h3><p>Booking dulu, isi data motor dan keluhannya. Petugas akan mengonfirmasi jadwal lewat kontak yang kamu berikan. Tanpa akun juga bisa.</p></div>
+                <div><h3>Sudah sampai di bengkel?</h3><p>Scan QR atau buka check-in, lalu minta kode ke petugas. Setelah diterima, progres servis, foto pekerjaan, dan bon bisa dilihat di akunmu.</p></div>
+            </div>
         </section>
-        @if (filled($workshop->phone) || filled($workshop->address))
-            <section class="mb-10 rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900" aria-labelledby="contact-heading">
-                <h2 id="contact-heading" class="text-xl font-semibold">Hubungi bengkel</h2>
-                <dl class="mt-4 grid gap-4 md:grid-cols-2">
-                    @if (filled($workshop->phone))<div><dt class="text-sm text-zinc-500">Telepon / WhatsApp</dt><dd class="mt-1 break-words">{{ $workshop->phone }}</dd></div>@endif
-                    @if (filled($workshop->address))<div><dt class="text-sm text-zinc-500">Alamat</dt><dd class="mt-1 whitespace-pre-line break-words">{{ $workshop->address }}</dd></div>@endif
-                </dl>
-            </section>
-        @endif
+
+        <section class="ajm-container ajm-section ajm-product" aria-labelledby="product-heading">
+            <div>
+                <h2 id="product-heading">Dudukan shockbreaker custom</h2>
+                <p>Dudukan shockbreaker mobil sudah aus? Bawa contohnya ke AJM. Ukurannya dilihat dulu sebelum membahas bahan dan harga.</p>
+                @if ($whatsappUrl)<a href="{{ $whatsappUrl }}" class="ajm-text-link" target="_blank" rel="noopener noreferrer">Chat AJM <span aria-hidden="true">↗</span></a>@endif
+            </div>
+            <div class="ajm-product-photos">
+                <figure><img src="{{ asset('images/workshop/shock-front-480.webp') }}" width="480" height="852" loading="lazy" decoding="async" alt="Contoh dudukan shockbreaker depan custom AJM"><figcaption>Dudukan depan</figcaption></figure>
+                <figure><img src="{{ asset('images/workshop/shock-rear-480.webp') }}" width="480" height="852" loading="lazy" decoding="async" alt="Contoh dudukan shockbreaker belakang custom AJM"><figcaption>Dudukan belakang</figcaption></figure>
+            </div>
+        </section>
+
+        <section id="lokasi" class="ajm-container ajm-section ajm-contact" aria-labelledby="contact-heading">
+            <div>
+                <h2 id="contact-heading">Mau mampir ke AJM?</h2>
+                @if (filled($workshop->address))<p class="ajm-address">{{ $workshop->address }}</p>
+                @else<p>Tanya petugas untuk alamat dan waktu kedatangan sebelum berangkat.</p>@endif
+            </div>
+            <div class="ajm-contact-actions">
+                <iframe class="ajm-location-map" title="Peta lokasi {{ $workshop->name }}" src="{{ $mapsEmbedUrl }}" width="640" height="360" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe>
+                @if ($mapsUrl)<a href="{{ $mapsUrl }}" class="ajm-button" target="_blank" rel="noopener noreferrer">Lihat rute <span aria-hidden="true">↗</span></a>@endif
+                @if (filled($workshop->phone))<div class="ajm-phone"><span>Telepon / WhatsApp</span><p>{{ $workshop->phone }}</p></div>@endif
+            </div>
+        </section>
     </main>
-    <footer class="border-t border-zinc-200 px-5 py-6 text-sm text-zinc-500 dark:border-zinc-800 dark:text-zinc-400"><div class="mx-auto max-w-6xl">{{ $workshop->name }}</div></footer>
+    <footer class="ajm-container ajm-footer">
+        <span>{{ $workshop->name }}</span>
+        <div><a href="{{ $bookingUrl }}">Booking servis</a>@guest @if (Route::has('register'))<a href="{{ route('register') }}">Daftar akun</a>@endif @endguest</div>
+    </footer>
     @fluxScripts
 </body>
 </html>

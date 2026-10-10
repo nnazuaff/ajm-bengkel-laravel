@@ -9,6 +9,18 @@ use Illuminate\Support\Facades\Storage;
 #[Fillable(['name', 'phone', 'address', 'receipt_footer', 'logo_path', 'horizontal_logo_path', 'favicon_path'])]
 class WorkshopSetting extends Model
 {
+    public function publicLogoUrl(): ?string
+    {
+        $path = $this->logo_path;
+        if (! is_string($path) || ! preg_match('/\A[a-zA-Z0-9_\/-]+\.(?:png|jpg|jpeg|webp)\z/', $path)) {
+            return null;
+        }
+        $disk = Storage::disk('public');
+
+        return $disk->exists($path) && in_array($disk->mimeType($path), ['image/png', 'image/jpeg', 'image/webp'], true)
+            ? $disk->url($path) : null;
+    }
+
     public function horizontalLogoUrl(): ?string
     {
         $path = $this->horizontal_logo_path;

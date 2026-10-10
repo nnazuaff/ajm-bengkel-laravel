@@ -5,11 +5,14 @@
     <title>{{ $receipt->receipt_number }} · Bon</title>
     <style>
         *{box-sizing:border-box}body{margin:0;padding:24px;background:#f4f4f5;color:#18181b;font:15px/1.6 system-ui,sans-serif}main{max-width:760px;margin:auto;background:white;padding:36px;border:1px solid #e4e4e7;border-radius:12px}h1,h2,p{margin:0 0 10px}h1{font-size:26px}h2{font-size:20px}small,.muted{color:#52525b}nav{max-width:760px;margin:0 auto 18px;display:flex;gap:16px;flex-wrap:wrap}a,button{color:inherit;font:inherit}button{cursor:pointer;padding:6px 14px}table{width:100%;border-collapse:collapse;margin:24px 0;font-variant-numeric:tabular-nums}td,th{padding:12px 6px;border-bottom:1px solid #e4e4e7;text-align:left;overflow-wrap:anywhere}td:first-child{max-width:320px}.right{text-align:right}dl{margin-left:auto;max-width:380px}dl div{display:flex;justify-content:space-between;gap:12px;padding:6px 0}dt,dd{margin:0}.total{font-size:20px;font-weight:700;border-top:2px solid #18181b;margin-top:10px}footer{border-top:1px solid #e4e4e7;margin-top:24px;padding-top:20px;white-space:pre-wrap;overflow-wrap:anywhere}.status{border:1px solid #a1a1aa;padding:6px 12px;display:inline-block} .scroll{overflow-x:auto}@media(max-width:600px){body{padding:12px}main{padding:18px}td,th{padding:10px 4px;font-size:12px}}@media print{body{background:white;padding:0}nav{display:none}main{border:0;border-radius:0;max-width:none;padding:0}tr{break-inside:avoid}thead{display:table-header-group}a{display:none}}
+        @media screen{html.dark body{background:#161818;color:#f1f3ef}html.dark main{background:#202323;border-color:#3a403d}html.dark .muted,html.dark small{color:#b0b7b2}html.dark td,html.dark th,html.dark footer{border-color:#3a403d}html.dark .total{border-color:#f1f3ef}}
+        @media print{body,main{background:white!important;color:#18181b!important}}
     </style>
-    @vite('resources/css/responsive-tables.css')
+    @include('partials.theme')
+    @vite(['resources/css/app.css', 'resources/css/responsive-tables.css', 'resources/js/app.ts'])
 </head>
 <body>
-<nav aria-label="Tindakan bon"><a href="{{ isset($customerReceipt) ? route('portal') : route('receipts.index',['receipt_id'=>$receipt->id]) }}">Kembali ke detail bon</a><a href="{{ route(isset($customerReceipt) ? 'customer.receipts.image' : 'receipts.image',$receipt) }}">Unduh PNG</a><button type="button" onclick="window.print()">Cetak</button></nav>
+<nav aria-label="Tindakan bon"><a href="{{ isset($customerReceipt) ? route('portal') : route('receipts.index',['receipt_id'=>$receipt->id]) }}">Kembali ke detail bon</a><a href="{{ route(isset($customerReceipt) ? 'customer.receipts.image' : 'receipts.image',$receipt) }}">Unduh PNG</a><button type="button" onclick="window.print()">Cetak</button><x-theme-toggle /></nav>
 <main>
     @php($logoPath = \App\Support\ReceiptImage::safeLogoPath($receipt->workshop_snapshot['logo_path'] ?? null))
     <header>@if($logoPath)<img src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($logoPath) }}" alt="Logo bengkel" width="120" height="120" style="object-fit:contain;background:white;margin-bottom:16px" />@endif<h1>{{ $receipt->workshop_snapshot['name'] ?? 'AJM Bengkel' }}</h1><p class="muted">{{ $receipt->workshop_snapshot['address'] ?? '' }}<br>{{ $receipt->workshop_snapshot['phone'] ?? '' }}</p></header>

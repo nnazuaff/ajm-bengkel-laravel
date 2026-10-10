@@ -1,6 +1,6 @@
 <x-layouts::auth :title="__('Masuk')">
     <div class="flex flex-col gap-5">
-        <x-auth-header :title="__('Masuk ke akun')" :description="__('Gunakan email dan kata sandi yang terdaftar.')" />
+        <x-auth-header :title="__('Masuk ke akun')" :description="__('Masukkan email dan kata sandi akun kamu. Kalau lupa kata sandi, pilih Lupa kata sandi? di bawah.')" />
 
         <x-auth-session-status class="text-center" :status="session('status')" />
 
