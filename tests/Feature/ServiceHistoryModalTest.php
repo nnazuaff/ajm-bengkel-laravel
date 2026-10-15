@@ -98,7 +98,7 @@ it('preserves jobs parts documentation and finalized receipt details in the popu
         ->call('openHistory', $order->vehicle_id)->assertSee('Mekanik riwayat')->assertSee('12.345 km')
         ->assertSee('Pekerjaan riwayat')->assertSee('Catatan pekerjaan')->assertSee('Part riwayat')
         ->assertSee('(dikembalikan)')->assertSee('Foto riwayat')->assertSeeHtml(route('documentation.show', $photo))
-        ->assertSee($receipt->receipt_number)->assertSee('40000,00')->assertSee('paid')
+        ->assertSee($receipt->receipt_number)->assertSee('Rp 40.000')->assertSee('paid')
         ->assertSeeHtml(route('receipts.show', $receipt))->assertDontSeeHtml(route('receipts.edit', $receipt->id));
 });
 

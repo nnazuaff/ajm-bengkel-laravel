@@ -91,11 +91,11 @@ class ReceiptImage
         $add('Status: '.$receipt->status->label().' · '.$receipt->payment_status->label(), 18, 20);
         foreach ($receipt->items as $index => $line) {
             $add(($index + 1).'. '.$line->description, 20, 4);
-            $add($line->quantity.' x Rp '.$line->unit_price.' = Rp '.$line->total, 18, 14);
+            $add($line->quantity.' x '.Rupiah::format($line->unit_price).' = '.Rupiah::format($line->total), 18, 14);
         }
-        $add('Subtotal: Rp '.$receipt->subtotal, 18, 10);
-        $add('Diskon: Rp '.$receipt->discount, 18, 10);
-        $add('TOTAL: Rp '.$receipt->grand_total, 25, 18);
+        $add('Subtotal: '.Rupiah::format($receipt->subtotal), 18, 10);
+        $add('Diskon: '.Rupiah::format($receipt->discount), 18, 10);
+        $add('TOTAL: '.Rupiah::format($receipt->grand_total), 25, 18);
         $paid = '0.00';
         // Fixed-size method summaries keep later installments/reversals from invalidating PNG output.
         foreach (PaymentMethod::cases() as $method) {
@@ -111,11 +111,11 @@ class ReceiptImage
                 }
             }
             $paid = bcadd($paid, $active, 2);
-            $add($method->label().': Rp '.$active.' · Dibalik Rp '.$reversed, 17);
+            $add($method->label().': '.Rupiah::format($active).' · Dibalik '.Rupiah::format($reversed), 17);
         }
         $add('Rincian tanggal dan referensi pembayaran tersedia pada bon web.', 16);
-        $add('Dibayar: Rp '.$paid);
-        $add('Sisa: Rp '.($receipt->status->value === 'voided' ? '0.00' : bcsub($receipt->grand_total, $paid, 2)), 20, 20);
+        $add('Dibayar: '.Rupiah::format($paid));
+        $add('Sisa: '.Rupiah::format($receipt->status->value === 'voided' ? '0.00' : bcsub($receipt->grand_total, $paid, 2)), 20, 20);
         if ($receipt->notes) {
             $add('Catatan: '.$receipt->notes, 16, 16);
         }

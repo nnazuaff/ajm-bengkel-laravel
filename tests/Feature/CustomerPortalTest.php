@@ -202,7 +202,7 @@ it('renders own jobs parts photos payments and direct-sale receipt without mutat
     $foreign = Receipt::factory()->create(['customer_id' => Customer::factory()->create()->id, 'status' => 'paid']);
     $before = [$order->fresh()->toArray(), $receipt->fresh()->toArray(), StockMovement::count()];
     Livewire::actingAs($user)->test(CustomerPortal::class)->call('selectOrder', $order->id)
-        ->assertSee('Busi snapshot lama')->assertSee('15000.00')->assertSee('Bukti milik saya')
+        ->assertSee('Busi snapshot lama')->assertSee('Rp 15.000')->assertSee('Bukti milik saya')
         ->assertSee('Transfer')->assertSee('Lunas')->assertSee($direct->receipt_number)->assertSee('Dibatalkan')
         ->assertDontSee($foreign->receipt_number)->assertDontSee('service-documentation/');
     expect([$order->fresh()->toArray(), $receipt->fresh()->toArray(), StockMovement::count()])->toBe($before);
@@ -257,7 +257,7 @@ it('shows active payment sums and truthful reversal status on the customer recei
     Payment::factory()->create(['receipt_id' => $receipt->id, 'amount' => '50.00']);
     Payment::factory()->create(['receipt_id' => $receipt->id, 'amount' => '80.00', 'reversed_at' => now(), 'reversal_reason' => 'Koreksi']);
     $this->actingAs($user)->get(route('customer.receipts.show', $receipt))->assertOk()
-        ->assertSee('Sebagian')->assertSee('Dibalik dalam pembukuan')->assertSee('Rp 50.00')->assertSee('Rp 150.00');
+        ->assertSee('Sebagian')->assertSee('Dibalik dalam pembukuan')->assertSee('Rp 50')->assertSee('Rp 150');
     $this->get(route('receipts.show', $receipt))->assertForbidden();
     $this->get(route('receipts.image', $receipt))->assertForbidden();
 });

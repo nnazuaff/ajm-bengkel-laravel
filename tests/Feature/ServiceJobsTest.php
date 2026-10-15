@@ -156,12 +156,12 @@ it('creates edits and cancels custom work inline with a decimal subtotal excludi
         ->set('form.name', 'Bersihkan CVT')->set('form.description', 'Roller diperiksa.')
         ->set('form.labor_price', '12500.25')->set('form.mechanic_id', (string) $mechanic->id)
         ->call('save')->assertHasNoErrors()->assertSet('showForm', false)->assertSee('Bersihkan CVT')
-        ->assertSee('Rp 12500,25');
+        ->assertSee('Rp 12.500,25');
     $job = ServiceJob::where('name', 'Bersihkan CVT')->sole();
     $page->call('edit', $job->id)->assertSet('editingId', $job->id)
         ->set('form.name', 'Bersihkan rem')->set('form.status', 'in_progress')
         ->call('save')->assertHasNoErrors()->assertSee('Bersihkan rem')
-        ->call('cancel', $job->id)->assertHasNoErrors()->assertSee('Rp 0,00');
+        ->call('cancel', $job->id)->assertHasNoErrors()->assertSee('Rp 0');
     expect($job->fresh()->status)->toBe(ServiceJobStatus::Cancelled)->and(ServiceJob::count())->toBe(2);
 });
 
@@ -242,8 +242,8 @@ it('allows terminal history but displays stale form errors after parent is close
 
 it('formats decimal money without floating point and rejects nonnumeric data', function () {
     $component = new ServiceJobs;
-    expect($component->formatMoney('999999999999.99'))->toBe('Rp 999999999999,99')
-        ->and($component->formatMoney('0'))->toBe('Rp 0,00');
+    expect($component->formatMoney('999999999999.99'))->toBe('Rp 999.999.999.999,99')
+        ->and($component->formatMoney('0'))->toBe('Rp 0');
     expect(fn () => $component->formatMoney('invalid'))->toThrow(InvalidArgumentException::class);
 });
 

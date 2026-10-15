@@ -9,6 +9,7 @@ use App\Enums\ServiceStatus;
 use App\Models\ServiceJob;
 use App\Models\ServiceOrder;
 use App\Models\User;
+use App\Support\Rupiah;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
@@ -159,11 +160,7 @@ class ServiceJobs extends Component
 
     public function formatMoney(string $decimal): string
     {
-        if (! is_numeric($decimal) || ! preg_match('/\A[0-9]+(?:\.[0-9]+)?\z/', $decimal)) {
-            throw new \InvalidArgumentException('Nilai jasa harus berupa desimal non-negatif.');
-        }
-
-        return 'Rp '.str_replace('.', ',', bcadd($decimal, '0', 2));
+        return Rupiah::format($decimal);
     }
 
     public function render(): View

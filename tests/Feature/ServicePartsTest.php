@@ -25,7 +25,7 @@ it('provides an assigned mechanic part picker and return controls without editab
     $this->actingAs($mechanic);
     $page = Livewire::test(ServiceParts::class, ['serviceOrderId' => $order->id])->assertSee('Part servis')
         ->set('search', 'Busi')->assertSee('Busi UI')->set('inventoryItemId', (string) $item->id)->set('quantity', '2')
-        ->call('usePart')->assertHasNoErrors()->assertSee('30000,50');
+        ->call('usePart')->assertHasNoErrors()->assertSee('Rp 30.000,50');
     $part = ServiceItem::sole();
     $page->call('returnPart', $part->id)->assertHasNoErrors()->assertSee('Dikembalikan');
     expect($item->fresh()->current_stock)->toBe(5);

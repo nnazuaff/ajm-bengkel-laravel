@@ -30,7 +30,7 @@
                 <a href="{{ route('inventory.index') }}" wire:navigate class="workshop-panel"><p class="text-sm text-zinc-500">Stok menipis</p><p class="mt-2 text-2xl font-semibold">{{ $metrics['low_stock'] }}</p></a>
                 <a href="{{ route('inventory.index') }}" wire:navigate class="workshop-panel"><p class="text-sm text-zinc-500">Stok habis</p><p class="mt-2 text-2xl font-semibold">{{ $metrics['out_of_stock'] }}</p></a>
                 <a href="{{ route('receipts.index') }}" wire:navigate class="workshop-panel"><p class="text-sm text-zinc-500">Bon belum lunas</p><p class="mt-2 text-2xl font-semibold">{{ $metrics['unpaid_receipts'] }}</p></a>
-                <a href="{{ route('payments.index') }}" wire:navigate class="workshop-panel"><p class="text-sm text-zinc-500">Pembayaran aktif hari ini</p><p class="mt-2 text-xl font-semibold">Rp {{ str_replace('.', ',', $metrics['revenue_today']) }}</p></a>
+                <a href="{{ route('payments.index') }}" wire:navigate class="workshop-panel"><p class="text-sm text-zinc-500">Pembayaran aktif hari ini</p><p class="mt-2 text-xl font-semibold">{{ \App\Support\Rupiah::format($metrics['revenue_today']) }}</p></a>
             </div>
         @endif
         <section class="space-y-3" aria-labelledby="latest-service-heading">

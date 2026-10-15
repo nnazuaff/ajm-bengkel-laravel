@@ -9,6 +9,7 @@ use App\Models\InventoryItem;
 use App\Models\ServiceItem;
 use App\Models\ServiceOrder;
 use App\Models\User;
+use App\Support\Rupiah;
 use App\Support\WorkshopInput;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
@@ -104,11 +105,7 @@ class ServiceParts extends Component
 
     public function formatMoney(string $decimal): string
     {
-        if (! is_numeric($decimal) || ! preg_match('/\A[0-9]+(?:\.[0-9]+)?\z/', $decimal)) {
-            throw new \InvalidArgumentException('Nilai harus desimal non-negatif.');
-        }
-
-        return 'Rp '.str_replace('.', ',', bcadd($decimal, '0', 2));
+        return Rupiah::format($decimal);
     }
 
     public function render(): View
