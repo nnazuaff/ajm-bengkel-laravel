@@ -20,6 +20,9 @@ class InventoryStock extends Component
     #[Locked]
     public ?int $stockItemId = null;
 
+    #[Locked]
+    public ?int $openingStock = null;
+
     /** @var array<string,mixed> */
     public array $stockForm = [];
 
@@ -41,16 +44,48 @@ class InventoryStock extends Component
         abort_unless(in_array($type, ['in', 'adjustment'], true), 422);
         $this->showForm = true;
         $this->stockItemId = $id;
-        $this->stockForm = ['type' => $type, 'quantity' => '', 'reason' => ''];
+        $this->openingStock = $type === 'adjustment' ? $item->current_stock : null;
+        $this->stockForm = ['type' => $type, 'quantity' => $type === 'adjustment' ? (string) $item->current_stock : '', 'reason' => ''];
         $this->resetValidation();
     }
 
     public function closeStock(): void
     {
         $this->authorize('viewAny', InventoryItem::class);
-        $this->reset('stockItemId', 'stockForm', 'showForm');
+        $this->reset('stockItemId', 'openingStock', 'stockForm', 'showForm');
         $this->resetValidation();
         $this->dispatch('inventory-stock-closed');
+    }
+
+    public function increaseStock(): void
+    {
+        $this->stepStock(1);
+    }
+
+    public function decreaseStock(): void
+    {
+        $this->stepStock(-1);
+    }
+
+    private function stepStock(int $step): void
+    {
+        abort_if($this->stockItemId === null, 404);
+        $this->authorize('update', InventoryItem::query()->findOrFail($this->stockItemId));
+        abort_unless($this->openingStock !== null && ($this->stockForm['type'] ?? null) === 'adjustment', 422);
+        $value = $this->stockForm['quantity'] ?? null;
+        if (filter_var($value, FILTER_VALIDATE_INT) === false) {
+            $this->addError('stockForm.quantity', 'Masukkan stok akhir berupa bilangan bulat.');
+
+            return;
+        }
+        $next = (int) $value + $step;
+        if ($next < 0 || $next > StockLedger::MAX_STOCK) {
+            $this->addError('stockForm.quantity', 'Stok akhir di luar batas.');
+
+            return;
+        }
+        $this->stockForm['quantity'] = (string) $next;
+        $this->resetValidation('stockForm.quantity');
     }
 
     public function saveStock(): void
@@ -59,9 +94,20 @@ class InventoryStock extends Component
         abort_if($this->stockItemId === null, 404);
         $item = InventoryItem::query()->findOrFail($this->stockItemId);
         $this->authorize('update', $item);
-        $data = $this->validate(['stockForm.type' => ['required', Rule::in(['in', 'adjustment'])], 'stockForm.quantity' => ['required', 'integer', 'between:'.(-StockLedger::MAX_STOCK).','.StockLedger::MAX_STOCK, 'not_in:0'], 'stockForm.reason' => ['required', 'string', 'max:255']])['stockForm'];
+        $correction = $this->openingStock !== null;
+        abort_unless(($this->stockForm['type'] ?? null) === ($correction ? 'adjustment' : 'in'), 422);
+        $quantityRules = $correction
+            ? ['required', 'integer', 'between:0,'.StockLedger::MAX_STOCK]
+            : ['required', 'integer', 'between:1,'.StockLedger::MAX_STOCK];
+        $data = $this->validate(['stockForm.type' => ['required', Rule::in(['in', 'adjustment'])], 'stockForm.quantity' => $quantityRules, 'stockForm.reason' => ['required', 'string', 'max:255']])['stockForm'];
+        $delta = $correction ? (int) $data['quantity'] - $this->openingStock : (int) $data['quantity'];
+        if ($delta === 0) {
+            $this->addError('stockForm.quantity', 'Stok akhir sama dengan stok saat formulir dibuka.');
+
+            return;
+        }
         try {
-            app(StockLedger::class)->move($this->actor(), $item, (int) $data['quantity'], $data['type'], $data['reason']);
+            app(StockLedger::class)->move($this->actor(), $item, $delta, $data['type'], $data['reason'], expectedStock: $correction ? $this->openingStock : null);
         } catch (ValidationException $e) {
             $this->errorsFor($e, 'stockForm');
 

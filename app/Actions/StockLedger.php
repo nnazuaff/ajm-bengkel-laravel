@@ -15,9 +15,9 @@ class StockLedger
 {
     public const MAX_STOCK = 2147483647;
 
-    public function move(User $actor, InventoryItem $item, int $delta, string $type, string $reason, ?string $referenceType = null, ?int $referenceId = null): StockMovement
+    public function move(User $actor, InventoryItem $item, int $delta, string $type, string $reason, ?string $referenceType = null, ?int $referenceId = null, ?int $expectedStock = null): StockMovement
     {
-        return DB::transaction(function () use ($actor, $item, $delta, $type, $reason, $referenceType, $referenceId): StockMovement {
+        return DB::transaction(function () use ($actor, $item, $delta, $type, $reason, $referenceType, $referenceId, $expectedStock): StockMovement {
             Validator::make(['quantity' => $delta, 'type' => $type, 'reason' => trim($reason), 'reference_type' => $referenceType, 'reference_id' => $referenceId], [
                 'quantity' => ['required', 'integer', 'between:'.(-self::MAX_STOCK).','.self::MAX_STOCK, 'not_in:0'], 'type' => ['required', Rule::in(['in', 'out', 'adjustment', 'return'])], 'reason' => ['required', 'string', 'max:255'], 'reference_type' => ['nullable', 'string', 'max:120'], 'reference_id' => ['nullable', 'integer', 'min:1'],
             ])->validate();
@@ -26,6 +26,9 @@ class StockLedger
             }
             $current = InventoryItem::withTrashed()->lockForUpdate()->findOrFail($item->id);
             $before = $current->current_stock;
+            if ($expectedStock !== null && $before !== $expectedStock) {
+                throw ValidationException::withMessages(['quantity' => 'Stok berubah sejak formulir dibuka. Buka ulang koreksi untuk melihat stok terbaru.']);
+            }
             $after = $before + $delta;
             if ($after < 0 || $after > self::MAX_STOCK) {
                 throw ValidationException::withMessages(['quantity' => 'Stok tidak cukup atau melebihi batas.']);

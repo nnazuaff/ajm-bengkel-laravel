@@ -27,13 +27,76 @@ it('provides searchable inventory creation restock adjustment history and catego
     $item = InventoryItem::where('sku', 'UI-1')->sole();
     $stock = Livewire::test(InventoryStock::class)->call('openStock', $item->id, 'in')->set('stockForm.quantity', '5')->set('stockForm.reason', 'Pembelian pemasok')
         ->call('saveStock')->assertHasNoErrors();
-    $stock->call('openStock', $item->id, 'adjustment')->set('stockForm.quantity', '-1')->set('stockForm.reason', 'Koreksi hitung fisik')
+    $stock->call('openStock', $item->id, 'adjustment')->assertSet('stockForm.quantity', '5')
+        ->set('stockForm.quantity', '4')->set('stockForm.reason', 'Koreksi hitung fisik')
         ->call('saveStock')->assertHasNoErrors();
     Livewire::test(InventoryHistory::class)->call('history', $item->id)->assertSee('Koreksi hitung fisik')->call('closeHistory');
     expect($item->fresh()->current_stock)->toBe(4);
     Livewire::test(InventoryCategories::class)->call('openForm')->set('categoryName', 'Pelumas')->call('saveCategory')->assertHasNoErrors();
     $page->dispatch('inventory-category-saved')->assertSee('Pelumas')->set('search', 'Unmatched')->assertDontSee('Oli UI');
 });
+
+it('adjusts an absolute stock target with buttons or direct entry and records the difference', function () {
+    $actor = User::factory()->create(['role' => 'admin']);
+    $item = InventoryItem::factory()->create(['current_stock' => 5]);
+    $modal = Livewire::actingAs($actor)->test(InventoryStock::class)->call('openStock', $item->id, 'adjustment')
+        ->assertSee('Stok saat ini: 5')->assertSet('stockForm.quantity', '5')
+        ->call('increaseStock')->assertSet('stockForm.quantity', '6')
+        ->call('decreaseStock')->assertSet('stockForm.quantity', '5')
+        ->call('decreaseStock')->assertSet('stockForm.quantity', '4')
+        ->set('stockForm.reason', 'Hasil hitung fisik')->call('saveStock')->assertHasNoErrors();
+    expect($item->fresh()->current_stock)->toBe(4);
+    $movement = StockMovement::where('inventory_item_id', $item->id)->sole();
+    expect($movement->quantity)->toBe(-1)->and($movement->stock_before)->toBe(5)->and($movement->stock_after)->toBe(4);
+
+    $modal->call('openStock', $item->id, 'adjustment')->set('stockForm.quantity', '9')
+        ->set('stockForm.reason', 'Hitung ulang')->call('saveStock')->assertHasNoErrors();
+    expect($item->fresh()->current_stock)->toBe(9)
+        ->and(StockMovement::where('inventory_item_id', $item->id)->latest('id')->first()->quantity)->toBe(5);
+
+    $modal->call('openStock', $item->id, 'adjustment')->set('stockForm.quantity', '0')
+        ->set('stockForm.reason', 'Stok fisik habis')->call('saveStock')->assertHasNoErrors();
+    expect($item->fresh()->current_stock)->toBe(0)
+        ->and(StockMovement::where('inventory_item_id', $item->id)->latest('id')->first()->quantity)->toBe(-9);
+});
+
+it('shows current and editable final stock with accessible step controls only for corrections', function () {
+    $item = InventoryItem::factory()->create(['current_stock' => 5, 'unit' => 'pcs']);
+    $page = Livewire::actingAs(User::factory()->create(['role' => 'admin']))->test(InventoryStock::class)
+        ->call('openStock', $item->id, 'adjustment')
+        ->assertSee('Stok saat ini: 5 pcs')->assertSee('Stok akhir')
+        ->assertSeeHtml('wire:click="decreaseStock"')->assertSeeHtml('wire:click="increaseStock"')
+        ->assertSeeHtml('wire:model="stockForm.quantity"');
+    $page->call('openStock', $item->id, 'in')->assertSee('Jumlah tambahan')
+        ->assertDontSeeHtml('wire:click="decreaseStock"')->assertDontSeeHtml('wire:click="increaseStock"');
+});
+
+it('rejects stale corrections without overwriting other staff changes', function () {
+    $actor = User::factory()->create(['role' => 'admin']);
+    $item = InventoryItem::factory()->create(['current_stock' => 5]);
+    $modal = Livewire::actingAs($actor)->test(InventoryStock::class)->call('openStock', $item->id, 'adjustment')
+        ->set('stockForm.quantity', '7')->set('stockForm.reason', 'Hasil hitung fisik');
+    app(StockLedger::class)->move($actor, $item, 2, 'in', 'Pembelian');
+    $modal->call('saveStock')->assertHasErrors('stockForm.quantity')->assertSet('showForm', true);
+    expect($item->fresh()->current_stock)->toBe(7)->and(StockMovement::count())->toBe(1);
+});
+
+it('does not allow switching a correction to restock from the browser', function () {
+    $item = InventoryItem::factory()->create(['current_stock' => 5]);
+    Livewire::actingAs(User::factory()->create(['role' => 'admin']))->test(InventoryStock::class)
+        ->call('openStock', $item->id, 'adjustment')->set('stockForm.type', 'in')
+        ->set('stockForm.quantity', '7')->set('stockForm.reason', 'Koreksi palsu')
+        ->call('saveStock')->assertStatus(422);
+    expect($item->fresh()->current_stock)->toBe(5)->and(StockMovement::count())->toBe(0);
+});
+
+it('validates absolute correction bounds and unchanged stock', function (string $target) {
+    $item = InventoryItem::factory()->create(['current_stock' => 5]);
+    Livewire::actingAs(User::factory()->create(['role' => 'admin']))->test(InventoryStock::class)
+        ->call('openStock', $item->id, 'adjustment')->set('stockForm.quantity', $target)
+        ->set('stockForm.reason', 'Hitung fisik')->call('saveStock')->assertHasErrors('stockForm.quantity');
+    expect($item->fresh()->current_stock)->toBe(5)->and(StockMovement::count())->toBe(0);
+})->with(['-1', '5', '1.5', '2147483648']);
 
 it('deletes an unused category with audit and clears selected form and filter', function () {
     $actor = User::factory()->create(['role' => 'admin']);
