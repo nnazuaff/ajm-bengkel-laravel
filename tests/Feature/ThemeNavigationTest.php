@@ -1,5 +1,15 @@
 <?php
 
+it('uses a short workshop message instead of photography or account instructions on auth pages', function (string $route) {
+    $this->get(route($route))->assertOk()
+        ->assertSee('Motor terasa beda?')
+        ->assertSee('Bawa ke AJM. Kami cek dulu sebelum membahas apa yang perlu dikerjakan.')
+        ->assertDontSee('images/workshop/ajm-front-960.webp')
+        ->assertDontSee('Akses akun')
+        ->assertDontSee('Untuk staf dan pelanggan')
+        ->assertDontSee('Akun staf dibuat oleh owner.');
+})->with(['login', 'register']);
+
 use App\Models\User;
 
 it('provides one-click theme controls on public and authentication navigation', function (string $path) {

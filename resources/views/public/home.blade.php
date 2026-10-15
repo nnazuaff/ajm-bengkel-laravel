@@ -87,6 +87,43 @@
             </div>
         </section>
 
+        <section id="faq" class="ajm-container ajm-section ajm-faq" data-slot="faq" data-layout="split" aria-labelledby="faq-heading">
+            <div class="ajm-faq-intro" data-slot="faq-header">
+                <p class="ajm-faq-eyebrow" data-slot="faq-eyebrow">FAQ</p>
+                <h2 id="faq-heading" data-slot="faq-title">Yang sering ditanyakan</h2>
+                <p data-slot="faq-description">Masih bingung mau booking atau check-in? Cek jawabannya di sini.</p>
+            </div>
+            <div class="ajm-faq-list" data-slot="faq-list">
+                <div class="ajm-faq-item" data-slot="faq-item">
+                    <h3 class="ajm-faq-question"><button type="button" id="faq-trigger-1" data-slot="faq-question" aria-expanded="false" aria-controls="faq-answer-1">Booking dan check-in bedanya apa?</button></h3>
+                    <div id="faq-answer-1" class="ajm-faq-answer" data-slot="faq-answer" role="region" aria-labelledby="faq-trigger-1" hidden>
+                        <p>Booking untuk mengajukan jadwal sebelum datang. Isi data motor, keluhan, dan waktu kedatangan, lalu tunggu konfirmasi petugas. Check-in dilakukan saat kamu sudah di bengkel: minta kode dari petugas, isi formulir, lalu tunggu pemeriksaan dan penerimaan motor. Booking tidak otomatis menjadi check-in.</p>
+                        <p><a href="{{ $bookingUrl }}">Ajukan booking</a> · <a href="{{ route('check-in') }}">Buka check-in</a></p>
+                    </div>
+                </div>
+                <div class="ajm-faq-item" data-slot="faq-item">
+                    <h3 class="ajm-faq-question"><button type="button" id="faq-trigger-2" data-slot="faq-question" aria-expanded="false" aria-controls="faq-answer-2">Kalau mau booking, perlu punya akun?</button></h3>
+                    <div id="faq-answer-2" class="ajm-faq-answer" data-slot="faq-answer" role="region" aria-labelledby="faq-trigger-2" hidden><p>Tidak. Kamu bisa booking tanpa akun dengan mengisi kontak, data motor, jadwal, dan keluhan. Petugas akan menghubungi kamu untuk mengonfirmasi jadwal; mengirim formulir belum berarti jadwal sudah disetujui.</p></div>
+                </div>
+                <div class="ajm-faq-item" data-slot="faq-item">
+                    <h3 class="ajm-faq-question"><button type="button" id="faq-trigger-3" data-slot="faq-question" aria-expanded="false" aria-controls="faq-answer-3">Sudah sampai di bengkel, bagaimana cara check-in?</button></h3>
+                    <div id="faq-answer-3" class="ajm-faq-answer" data-slot="faq-answer" role="region" aria-labelledby="faq-trigger-3" hidden><p>Scan QR di bengkel atau buka halaman check-in. Minta kode bengkel 6 digit ke petugas, lalu isi formulir. Jika sudah punya akun pelanggan, masuk dulu agar tidak perlu daftar ulang. Setelah dikirim, tunggu petugas memeriksa identitas dan motor kamu.</p></div>
+                </div>
+                <div class="ajm-faq-item" data-slot="faq-item">
+                    <h3 class="ajm-faq-question"><button type="button" id="faq-trigger-4" data-slot="faq-question" aria-expanded="false" aria-controls="faq-answer-4">Bisa langsung datang tanpa booking?</button></h3>
+                    <div id="faq-answer-4" class="ajm-faq-answer" data-slot="faq-answer" role="region" aria-labelledby="faq-trigger-4" hidden><p>Bisa. Datang langsung dengan motor kamu, lalu sampaikan keluhannya ke petugas. Di bengkel kamu bisa check-in memakai kode dari petugas, atau petugas mencatat kedatanganmu sebagai walk-in.</p></div>
+                </div>
+                <div class="ajm-faq-item" data-slot="faq-item">
+                    <h3 class="ajm-faq-question"><button type="button" id="faq-trigger-5" data-slot="faq-question" aria-expanded="false" aria-controls="faq-answer-5">Apa yang harus disiapkan sebelum motor dicek?</button></h3>
+                    <div id="faq-answer-5" class="ajm-faq-answer" data-slot="faq-answer" role="region" aria-labelledby="faq-trigger-5" hidden><p>Siapkan pelat nomor, informasi motor, perkiraan kilometer saat ini, dan ceritakan gejala yang kamu rasakan. Kalau sudah booking, sebutkan nama atau kontak yang dipakai agar petugas mudah menemukan pengajuannya.</p></div>
+                </div>
+                <div class="ajm-faq-item" data-slot="faq-item">
+                    <h3 class="ajm-faq-question"><button type="button" id="faq-trigger-6" data-slot="faq-question" aria-expanded="false" aria-controls="faq-answer-6">Setelah servis, catatannya bisa dilihat di mana?</button></h3>
+                    <div id="faq-answer-6" class="ajm-faq-answer" data-slot="faq-answer" role="region" aria-labelledby="faq-trigger-6" hidden><p>Melalui akun pelanggan setelah identitas dan motor kamu diverifikasi petugas. Kamu bisa melihat progres, riwayat servis, dokumentasi pekerjaan jika tersedia, dan bon yang sudah dibuat.</p></div>
+                </div>
+            </div>
+        </section>
+
         <section id="lokasi" class="ajm-container ajm-section ajm-contact" aria-labelledby="contact-heading">
             <div>
                 <h2 id="contact-heading">Mau mampir ke AJM?</h2>

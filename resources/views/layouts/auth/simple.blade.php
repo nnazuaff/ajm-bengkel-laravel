@@ -20,10 +20,9 @@
                         </span>
                     </a>
 
-                    <div class="hidden space-y-3 lg:block">
-                        <p class="text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">{{ __('Akses akun') }}</p>
-                        <flux:heading size="lg" level="2">{{ __('Untuk staf dan pelanggan') }}</flux:heading>
-                        <flux:text>{{ __('Booking, progres servis, foto pekerjaan, dan bon bisa dilihat di akunmu. Akun staf dibuat oleh owner.') }}</flux:text>
+                    <div class="ajm-auth-message">
+                        <h2>Motor terasa beda?</h2>
+                        <p>Bawa ke AJM. Kami cek dulu sebelum membahas apa yang perlu dikerjakan.</p>
                     </div>
                 </aside>
 

@@ -63,6 +63,24 @@
 .ajm-text-link { display: inline-flex; gap: 20px; margin-top: 24px; padding-bottom: 5px; border-bottom: 1px solid #8e9891; font-weight: 500; font-size: .9375rem; }
 .ajm-product-photos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 .ajm-product-photos img { width: 100%; height: auto; aspect-ratio: 4 / 5; object-fit: cover; border-radius: 8px; }
+.ajm-faq { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 48px; }
+.ajm-faq-intro .ajm-faq-eyebrow { color: var(--home-label, #f09182); font-size: .875rem; font-weight: 500; }
+.ajm-faq-intro h2 { margin-top: 8px; }
+.ajm-faq-intro p:not(.ajm-faq-eyebrow) { margin-top: 16px; max-width: 33ch; }
+.ajm-faq-list { min-width: 0; }
+.ajm-faq-item { border-bottom: 1px solid var(--home-line); }
+.ajm-faq-item:first-child { border-top: 1px solid var(--home-line); }
+.ajm-faq-question { margin: 0; }
+.ajm-faq-question button { display: flex; width: 100%; align-items: center; justify-content: space-between; gap: 24px; min-height: 70px; padding: 18px 0; border: 0; background: transparent; color: var(--home-text); font: inherit; font-size: 1.0625rem; font-weight: 600; line-height: 1.45; text-align: left; cursor: pointer; }
+.ajm-faq-question button::after { content: '+'; flex: none; color: var(--home-muted); font-size: 1.5rem; font-weight: 400; line-height: 1; }
+.ajm-faq-question button[aria-expanded="true"]::after { content: '−'; color: var(--home-label, #f09182); }
+.ajm-faq-answer { overflow: hidden; }
+.ajm-faq-answer[hidden] { display: none; }
+.ajm-faq-question button:focus-visible { outline: 2px solid #f09182; outline-offset: 3px; border-radius: 2px; }
+.ajm-faq-answer p { max-width: 65ch; padding-right: 32px; padding-bottom: 18px; font-size: .9375rem; }
+.ajm-faq-answer p + p { padding-bottom: 24px; }
+.ajm-faq-list a { text-decoration: underline !important; text-underline-offset: 4px; color: var(--home-text) !important; }
+:root:not(.dark) .ajm-home .ajm-faq-question button:focus-visible { outline-color: #aa3528; }
 .ajm-contact { display: flex; align-items: flex-start; justify-content: space-between; gap: 40px; }
 .ajm-contact > div { min-width: 0; }
 .ajm-contact p { margin-top: 18px; max-width: 48ch; }
@@ -83,7 +101,7 @@
     .ajm-hero { grid-template-columns: 1fr; padding-block: 40px 48px; gap: 32px; }
     .ajm-home h1 { font-size: clamp(2.25rem, 6vw, 3rem); max-width: 18ch; }
     .ajm-hero-photo img { aspect-ratio: 16 / 9; }
-    .ajm-services { grid-template-columns: 1fr; gap: 32px; }
+    .ajm-services, .ajm-faq { grid-template-columns: 1fr; gap: 32px; }
     .ajm-services > div > p { max-width: 54ch; }
     .ajm-product { grid-template-columns: 1fr; gap: 32px; }
     .ajm-product-photos { max-width: 640px; }
