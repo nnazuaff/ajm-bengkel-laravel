@@ -5,9 +5,46 @@
     x-on:inventory-categories-closed.window="$nextTick(() => $refs.manageCategories.focus())" class="mx-auto w-full max-w-7xl space-y-6">
     <header class="flex flex-wrap items-start justify-between gap-4">
         <div><flux:heading size="xl" level="1">Inventori</flux:heading><flux:text class="mt-1">Barang, batas stok, dan mutasi yang dapat ditelusuri.</flux:text></div>
-        <div class="flex flex-wrap gap-3"><flux:button x-ref="manageCategories" wire:click="openCategories" wire:loading.attr="disabled">Kelola kategori</flux:button><flux:button x-ref="createInventory" x-on:click="editorTrigger = $el" variant="primary" icon="plus" wire:click="create" wire:loading.attr="disabled">Tambah barang</flux:button></div>
+        <div class="flex flex-wrap gap-3"><flux:button href="{{ route('receipts.create') }}" wire:navigate>Jual sparepart</flux:button><flux:button x-ref="manageCategories" wire:click="openCategories" wire:loading.attr="disabled">Kelola kategori</flux:button><flux:button x-ref="createInventory" x-on:click="editorTrigger = $el" variant="primary" icon="plus" wire:click="create" wire:loading.attr="disabled">Tambah barang</flux:button></div>
     </header>
     @if(session('inventoryStatus'))<p role="status" class="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-200">{{ session('inventoryStatus') }}</p>@endif
+    <div class="flex flex-wrap items-start gap-3">
+        <details data-inventory-import @if($importErrors) open @endif class="w-full rounded-xl border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900 sm:w-auto sm:open:w-96">
+            <summary class="w-fit cursor-pointer rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium hover:bg-zinc-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-500 dark:border-zinc-700 dark:hover:bg-zinc-800">Impor</summary>
+            <div class="mt-4 space-y-3">
+                <p class="text-sm text-zinc-600 dark:text-zinc-400">Unduh template, isi produk, lalu unggah CSV atau XLSX (maksimal 500 produk, 2 MB). SKU yang sudah ada ditolak; jika ada kesalahan, seluruh impor dibatalkan. Stok awal tercatat sebagai mutasi.</p>
+                <div class="flex flex-wrap gap-3 text-sm font-medium">
+                    <a class="underline underline-offset-4" href="{{ route('inventory.export', ['format' => 'csv', 'template' => 1]) }}">Unduh template CSV</a>
+                    <a class="underline underline-offset-4" href="{{ route('inventory.export', ['format' => 'xlsx', 'template' => 1]) }}">Unduh template XLSX</a>
+                </div>
+                <form class="flex flex-wrap items-end gap-3" action="{{ route('inventory.import') }}" method="POST" enctype="multipart/form-data">
+                    @csrf
+                    <div class="w-full">
+                        <label for="inventory-file" class="block cursor-pointer rounded-xl border-2 border-dashed border-zinc-400 bg-zinc-50 p-4 text-sm transition-colors hover:border-zinc-600 hover:bg-zinc-100 focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-zinc-500 dark:border-zinc-500 dark:bg-zinc-800 dark:hover:border-zinc-300 dark:hover:bg-zinc-700">
+                            <span class="block font-semibold">Pilih file CSV atau XLSX</span>
+                            <span class="mt-1 block text-xs text-zinc-600 dark:text-zinc-300">Klik kotak ini untuk memilih berkas.</span>
+                            <input class="mt-3 block w-full min-w-0 cursor-pointer text-sm text-zinc-700 file:mr-3 file:cursor-pointer file:rounded-lg file:border file:border-zinc-300 file:bg-white file:px-3 file:py-2 file:font-medium dark:text-zinc-200 dark:file:border-zinc-600 dark:file:bg-zinc-900 dark:file:text-zinc-100" id="inventory-file" name="file" type="file" accept=".csv,.xlsx" required aria-describedby="inventory-file-help" />
+                        </label>
+                        <p id="inventory-file-help" class="mt-2 text-xs text-zinc-500">Maksimal 2 MB. Harga angka tanpa Rp; is_active: 1 atau 0. Periksa stok sebelum impor.</p>
+                    </div>
+                    <flux:button type="submit" variant="primary">Impor produk</flux:button>
+                </form>
+                @if($importErrors)
+                    <div role="alert" class="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800 dark:border-red-900 dark:bg-red-950 dark:text-red-200">
+                        <p class="font-semibold">Impor dibatalkan. Perbaiki semua kesalahan berikut:</p>
+                        <ul class="mt-2 list-inside list-disc space-y-1">@foreach($importErrors as $message)<li>{{ $message }}</li>@endforeach</ul>
+                    </div>
+                @endif
+            </div>
+        </details>
+        <details data-inventory-export class="w-full rounded-xl border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900 sm:w-auto">
+            <summary class="w-fit cursor-pointer rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium hover:bg-zinc-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-500 dark:border-zinc-700 dark:hover:bg-zinc-800">Ekspor</summary>
+            <div class="mt-4 flex flex-wrap gap-3 text-sm font-medium">
+                <a class="underline underline-offset-4" href="{{ route('inventory.export', ['format' => 'csv']) }}">Unduh CSV</a>
+                <a class="underline underline-offset-4" href="{{ route('inventory.export', ['format' => 'xlsx']) }}">Unduh XLSX</a>
+            </div>
+        </details>
+    </div>
     <div class="grid items-end gap-4 md:grid-cols-3">
         <flux:input data-workshop-search wire:model.live.debounce.300ms="search" label="Cari nama atau SKU" type="search" maxlength="120" icon="magnifying-glass" />
         <flux:field><flux:label for="category-filter">Kategori</flux:label><select id="category-filter" wire:model.live="categoryFilter" class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 dark:border-zinc-700 dark:bg-zinc-900"><option value="">Semua kategori</option>@foreach($categories as $category)<option value="{{ $category->id }}">{{ $category->name }}</option>@endforeach</select></flux:field>

@@ -59,7 +59,7 @@ it('filters the payment list independently of the editor', function () {
     $actor = User::factory()->create(['role' => 'admin']);
     $receipt = Receipt::factory()->create(['status' => 'final', 'grand_total' => '30000.00']);
     app(ManageReceipt::class)->pay($actor, $receipt, ['amount' => '30000.00', 'method' => 'cash', 'paid_at' => now()->format('Y-m-d H:i:s')]);
-    Livewire::actingAs($actor)->test(Payments::class)->assertSee('30000.00')->set('search', 'does not exist')->assertDontSee('30000.00');
+    Livewire::actingAs($actor)->test(Payments::class)->assertSee('Rp 30.000')->set('search', 'does not exist')->assertDontSee('Rp 30.000');
 });
 
 it('redirects legacy service receipt intake without mutating on GET', function () {
@@ -78,6 +78,30 @@ it('downloads protected PNG snapshots without later master changes', function ()
     $this->actingAs($actor)->get(route('receipts.show', $receipt))->assertOk()->assertSee('AJM Bengkel')->assertDontSee('New Master Name')->assertSee('Cuci motor');
     $response = $this->get(route('receipts.image', $receipt))->assertOk()->assertHeader('Content-Type', 'image/png')->assertHeader('X-Content-Type-Options', 'nosniff');
     expect(substr($response->getContent(), 0, 8))->toBe("\x89PNG\r\n\x1a\n");
+});
+
+it('formats receipt web totals while keeping decimal snapshots in storage', function () {
+    $actor = User::factory()->create(['role' => 'admin']);
+    $receipt = Receipt::factory()->create(['status' => 'final', 'subtotal' => '50000.00', 'discount' => '5000.00', 'grand_total' => '45000.00']);
+    $receipt->items()->create(['type' => 'custom', 'description' => 'Jasa servis', 'quantity' => 1, 'unit_price' => '50000.00', 'total' => '50000.00']);
+
+    $this->actingAs($actor)->get(route('receipts.show', $receipt))->assertOk()
+        ->assertSee('Rp 50.000')->assertSee('Rp 5.000')->assertSee('Rp 45.000')
+        ->assertDontSee('50000.00')->assertDontSee('45000.00');
+    expect($receipt->fresh()->grand_total)->toBe('45000.00');
+});
+
+it('downloads a finalized receipt as a protected PDF snapshot', function () {
+    $actor = User::factory()->create(['role' => 'admin']);
+    $receipt = app(ManageReceipt::class)->create($actor, ['items' => [['type' => 'custom', 'description' => 'Ganti oli', 'quantity' => 1, 'unit_price' => '35000.00']]]);
+    app(ManageReceipt::class)->finalize($actor, $receipt);
+    $response = $this->actingAs($actor)->get(route('receipts.pdf', $receipt))
+        ->assertOk()->assertHeader('Content-Type', 'application/pdf');
+    expect(str_starts_with($response->getContent(), '%PDF-'))->toBeTrue();
+    $this->actingAs(User::factory()->create(['role' => 'mechanic']))->get(route('receipts.pdf', $receipt))->assertForbidden();
+    $this->actingAs($actor);
+    $draft = Receipt::factory()->create();
+    $this->get(route('receipts.pdf', $draft))->assertStatus(409);
 });
 
 it('does not export draft documents', function () {

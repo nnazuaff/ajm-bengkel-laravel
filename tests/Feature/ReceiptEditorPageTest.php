@@ -11,6 +11,20 @@ use App\Models\User;
 use Livewire\Features\SupportLockedProperties\CannotUpdateLockedPropertyException;
 use Livewire\Livewire;
 
+it('links inventory to a direct spare-part sale with clear stock and payment guidance', function () {
+    $admin = User::factory()->create(['role' => 'admin']);
+
+    $this->actingAs($admin)->get(route('inventory.index'))->assertOk()
+        ->assertSee('Jual sparepart')
+        ->assertSee(route('receipts.create'), false);
+
+    $this->get(route('receipts.create'))->assertOk()
+        ->assertSee('Penjualan sparepart langsung')
+        ->assertSee('Stok berkurang saat bon difinalisasi')
+        ->assertSee('pembayaran dicatat setelahnya');
+    expect(Receipt::count())->toBe(0);
+});
+
 it('keeps receipt editing on its own page after saving', function () {
     $actor = User::factory()->create(['role' => 'admin']);
     $component = Livewire::actingAs($actor)->test(ReceiptEditor::class)
@@ -104,9 +118,9 @@ it('refreshes product pricing on finalize and restores stock on owner void', fun
         ->call('addItem', 'product')->set('items.0.inventory_item_id', $product->id)
         ->set('items.0.quantity', 2)->set('items.0.unit_price', '1.00')
         ->call('save')->assertHasNoErrors()->assertRedirect(route('receipts.edit', Receipt::sole()->id));
-    $component = Livewire::test(ReceiptEditor::class, ['receipt' => Receipt::sole()->id])->assertSee('1198.00');
+    $component = Livewire::test(ReceiptEditor::class, ['receipt' => Receipt::sole()->id])->assertSee('Rp 1.198');
     $product->update(['selling_price' => '600.00']);
-    $component->call('finalize')->assertHasNoErrors()->assertSee('1200.00')
+    $component->call('finalize')->assertHasNoErrors()->assertSee('Rp 1.200')
         ->assertDontSee('Simpan draf')->assertSee('Unduh PNG')
         ->set('amount', '600.00')->call('pay')->assertHasNoErrors()->assertSee('Sebagian');
     expect($product->refresh()->current_stock)->toBe(3);

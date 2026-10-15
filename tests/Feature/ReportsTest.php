@@ -11,6 +11,7 @@ use App\Models\ServiceOrder;
 use App\Models\StockMovement;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 
 it('streams an authorized CSV with real headers', function () {
     $this->actingAs(User::factory()->create(['role' => Role::Admin]))
@@ -18,6 +19,37 @@ it('streams an authorized CSV with real headers', function () {
         ->assertOk()->assertHeader('Content-Type', 'text/csv; charset=UTF-8')
         ->assertHeader('Content-Disposition', 'attachment; filename=payments-2026-10-01-2026-10-07.csv')
         ->assertStreamedContent("tanggal,penerimaan,pembalikan,bersih,aktif,servis_selesai,stok_masuk,stok_keluar\n");
+});
+
+it('downloads a real xlsx report with exact numeric cells', function () {
+    $admin = User::factory()->create(['role' => Role::Admin]);
+    $receipt = Receipt::factory()->create(['cashier_id' => $admin->id]);
+    Payment::create(['receipt_id' => $receipt->id, 'created_by' => $admin->id, 'amount' => '150.30', 'method' => 'cash', 'paid_at' => '2026-10-02 09:00:00']);
+    $bytes = $this->actingAs($admin)->get('/reports/export?from=2026-10-02&to=2026-10-02&format=xlsx')
+        ->assertOk()->assertHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        ->streamedContent();
+    $path = tempnam(sys_get_temp_dir(), 'report');
+    try {
+        file_put_contents($path, $bytes);
+        $book = IOFactory::load($path);
+        expect($book->getActiveSheet()->getCell('A2')->getValue())->toBe('2026-10-02')
+            ->and($book->getActiveSheet()->getCell('B2')->getValue())->toBe('150.30');
+        $book->disconnectWorksheets();
+    } finally {
+        unlink($path);
+    }
+});
+
+it('serves the same cash flow as a PDF to workshop managers only', function () {
+    $admin = User::factory()->create(['role' => Role::Admin]);
+    $receipt = Receipt::factory()->create(['cashier_id' => $admin->id]);
+    Payment::create(['receipt_id' => $receipt->id, 'created_by' => $admin->id, 'amount' => '150.30', 'method' => 'cash', 'paid_at' => '2026-10-02 09:00:00']);
+    $response = $this->actingAs($admin)->get('/reports/export?from=2026-10-02&to=2026-10-02&format=pdf')
+        ->assertOk()->assertHeader('Content-Type', 'application/pdf');
+    expect(str_starts_with($response->getContent(), '%PDF-'))->toBeTrue();
+    expect(strlen($response->getContent()))->toBeGreaterThan(1000);
+    $this->actingAs(User::factory()->create(['role' => Role::Customer]))
+        ->get('/reports/export?from=2026-10-02&to=2026-10-02&format=pdf')->assertForbidden();
 });
 
 it('reports exact cash flow with paid dates and reversal dates independently', function () {
@@ -33,7 +65,7 @@ it('reports exact cash flow with paid dates and reversal dates independently', f
         ['date' => '2026-10-03', 'gross' => '0.00', 'reversed' => '70.25', 'net' => '-70.25', 'active' => '0.00', 'services' => 0, 'stock_in' => 0, 'stock_out' => 0],
     ]);
     Livewire\Livewire::actingAs($admin)->test(Reports::class)->set('from', '2026-10-02')->set('to', '2026-10-03')
-        ->call('apply')->assertHasNoErrors()->assertSee('80.05')->assertSee('150.30')->assertSee('70.25')
+        ->call('apply')->assertHasNoErrors()->assertSee('Rp 80')->assertSee('Rp 150')->assertSee('-Rp 70')
         ->assertSee('Bukan laporan laba');
     $this->actingAs($admin)->get('/reports/export?from=2026-10-02&to=2026-10-03')->assertOk()
         ->assertStreamedContent("tanggal,penerimaan,pembalikan,bersih,aktif,servis_selesai,stok_masuk,stok_keluar\n2026-10-02,150.30,0.00,150.30,100.10,0,0,0\n2026-10-03,0.00,70.25,-70.25,0.00,0,0,0\n");

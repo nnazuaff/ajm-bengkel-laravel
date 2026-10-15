@@ -6,6 +6,7 @@ use App\Models\AuditLog;
 use App\Models\InventoryCategory;
 use App\Models\InventoryItem;
 use App\Models\User;
+use App\Support\Rupiah;
 use App\Support\WorkshopInput;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
@@ -145,11 +146,7 @@ class Inventory extends Component
 
     public function formatMoney(string $decimal): string
     {
-        if (! is_numeric($decimal) || ! preg_match('/\A[0-9]+(?:\.[0-9]+)?\z/', $decimal)) {
-            throw new \InvalidArgumentException('Nilai harus desimal non-negatif.');
-        }
-
-        return 'Rp '.str_replace('.', ',', bcadd($decimal, '0', 2));
+        return Rupiah::format($decimal);
     }
 
     public function render(): View
@@ -160,6 +157,8 @@ class Inventory extends Component
             ->when($this->stockFilter === 'low', fn (Builder $q) => $q->whereColumn('current_stock', '<=', 'minimum_stock'))
             ->when($this->stockFilter === 'out', fn (Builder $q) => $q->where('current_stock', 0))->orderBy('name')->paginate(15);
 
-        return view('livewire.inventory', ['items' => $items, 'categories' => InventoryCategory::query()->orderBy('name')->get()]);
+        return view('livewire.inventory', ['items' => $items, 'categories' => InventoryCategory::query()->orderBy('name')->get(),
+            'importErrors' => session('inventory_import_errors', session('errors')?->get('file') ?? []),
+        ]);
     }
 }
