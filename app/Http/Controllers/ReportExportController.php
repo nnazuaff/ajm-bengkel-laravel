@@ -8,11 +8,14 @@ use Dompdf\Dompdf;
 use Illuminate\Http\Request;
 use PhpOffice\PhpSpreadsheet\Cell\DataType;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Symfony\Component\HttpFoundation\Response;
 
 class ReportExportController extends Controller
 {
+    private const HEADINGS = ['Tanggal', 'Penerimaan (Rp)', 'Pembayaran Dibatalkan (Rp)', 'Penerimaan Bersih (Rp)', 'Pembayaran Aktif (Rp)', 'Servis Selesai', 'Stok Masuk', 'Stok Keluar'];
+
     public function __invoke(Request $request): Response
     {
         $actor = User::find($request->user()?->id);
@@ -37,8 +40,7 @@ class ReportExportController extends Controller
                 try {
                     $sheet = $book->getActiveSheet();
                     $sheet->setTitle('Laporan harian');
-                    $headings = ['tanggal', 'penerimaan', 'pembalikan', 'bersih', 'aktif', 'servis_selesai', 'stok_masuk', 'stok_keluar'];
-                    foreach ($headings as $column => $heading) {
+                    foreach (self::HEADINGS as $column => $heading) {
                         $sheet->setCellValueExplicit([$column + 1, 1], $heading, DataType::TYPE_STRING);
                     }
                     foreach ($days as $index => $day) {
@@ -46,7 +48,17 @@ class ReportExportController extends Controller
                             $sheet->setCellValueExplicit([$column + 1, $index + 2], (string) $value, DataType::TYPE_STRING);
                         }
                     }
+                    $sheet->getStyle('A1:H1')->applyFromArray([
+                        'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+                        'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '334155']],
+                    ]);
+                    $sheet->getRowDimension(1)->setRowHeight(28);
+                    foreach (range('A', 'H') as $column) {
+                        $sheet->getColumnDimension($column)->setWidth($column === 'A' ? 16 : 30);
+                    }
+                    $sheet->setAutoFilter('A1:H'.($days->count() + 1));
                     $sheet->freezePane('A2');
+
                     (new Xlsx($book))->save('php://output');
                 } finally {
                     $book->disconnectWorksheets();
@@ -59,7 +71,7 @@ class ReportExportController extends Controller
             if ($file === false) {
                 throw new \RuntimeException('CSV output unavailable.');
             }
-            fputcsv($file, ['tanggal', 'penerimaan', 'pembalikan', 'bersih', 'aktif', 'servis_selesai', 'stok_masuk', 'stok_keluar'], escape: '');
+            fputcsv($file, self::HEADINGS, escape: '');
             foreach ($days as $day) {
                 fputcsv($file, array_map(self::csvCell(...), array_values($day)), escape: '');
             }

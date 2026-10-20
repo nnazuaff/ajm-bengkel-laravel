@@ -25,7 +25,7 @@
                             <span class="mt-1 block text-xs text-zinc-600 dark:text-zinc-300">Klik kotak ini untuk memilih berkas.</span>
                             <input class="mt-3 block w-full min-w-0 cursor-pointer text-sm text-zinc-700 file:mr-3 file:cursor-pointer file:rounded-lg file:border file:border-zinc-300 file:bg-white file:px-3 file:py-2 file:font-medium dark:text-zinc-200 dark:file:border-zinc-600 dark:file:bg-zinc-900 dark:file:text-zinc-100" id="inventory-file" name="file" type="file" accept=".csv,.xlsx" required aria-describedby="inventory-file-help" />
                         </label>
-                        <p id="inventory-file-help" class="mt-2 text-xs text-zinc-500">Maksimal 2 MB. Harga angka tanpa Rp; is_active: 1 atau 0. Periksa stok sebelum impor.</p>
+                        <p id="inventory-file-help" class="mt-2 text-xs text-zinc-500">Maksimal 2 MB. Harga angka tanpa Rp; kolom Aktif: Ya atau Tidak. Kolom Stok menjadi stok awal produk baru. Periksa stok sebelum impor.</p>
                     </div>
                     <flux:button type="submit" variant="primary">Impor produk</flux:button>
                 </form>

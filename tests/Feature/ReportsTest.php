@@ -18,7 +18,7 @@ it('streams an authorized CSV with real headers', function () {
         ->get('/reports/export?from=2026-10-01&to=2026-10-07')
         ->assertOk()->assertHeader('Content-Type', 'text/csv; charset=UTF-8')
         ->assertHeader('Content-Disposition', 'attachment; filename=payments-2026-10-01-2026-10-07.csv')
-        ->assertStreamedContent("tanggal,penerimaan,pembalikan,bersih,aktif,servis_selesai,stok_masuk,stok_keluar\n");
+        ->assertStreamedContent("Tanggal,\"Penerimaan (Rp)\",\"Pembayaran Dibatalkan (Rp)\",\"Penerimaan Bersih (Rp)\",\"Pembayaran Aktif (Rp)\",\"Servis Selesai\",\"Stok Masuk\",\"Stok Keluar\"\n");
 });
 
 it('downloads a real xlsx report with exact numeric cells', function () {
@@ -32,6 +32,9 @@ it('downloads a real xlsx report with exact numeric cells', function () {
     try {
         file_put_contents($path, $bytes);
         $book = IOFactory::load($path);
+        expect($book->getActiveSheet()->rangeToArray('A1:H1')[0])->toBe(['Tanggal', 'Penerimaan (Rp)', 'Pembayaran Dibatalkan (Rp)', 'Penerimaan Bersih (Rp)', 'Pembayaran Aktif (Rp)', 'Servis Selesai', 'Stok Masuk', 'Stok Keluar']);
+        expect($book->getActiveSheet()->getStyle('A1')->getFont()->getBold())->toBeTrue()
+            ->and($book->getActiveSheet()->getColumnDimension('B')->getWidth())->toBeGreaterThan(20);
         expect($book->getActiveSheet()->getCell('A2')->getValue())->toBe('2026-10-02')
             ->and($book->getActiveSheet()->getCell('B2')->getValue())->toBe('150.30');
         $book->disconnectWorksheets();
@@ -68,7 +71,7 @@ it('reports exact cash flow with paid dates and reversal dates independently', f
         ->call('apply')->assertHasNoErrors()->assertSee('Rp 80')->assertSee('Rp 150')->assertSee('-Rp 70')
         ->assertSee('Bukan laporan laba');
     $this->actingAs($admin)->get('/reports/export?from=2026-10-02&to=2026-10-03')->assertOk()
-        ->assertStreamedContent("tanggal,penerimaan,pembalikan,bersih,aktif,servis_selesai,stok_masuk,stok_keluar\n2026-10-02,150.30,0.00,150.30,100.10,0,0,0\n2026-10-03,0.00,70.25,-70.25,0.00,0,0,0\n");
+        ->assertStreamedContent("Tanggal,\"Penerimaan (Rp)\",\"Pembayaran Dibatalkan (Rp)\",\"Penerimaan Bersih (Rp)\",\"Pembayaran Aktif (Rp)\",\"Servis Selesai\",\"Stok Masuk\",\"Stok Keluar\"\n2026-10-02,150.30,0.00,150.30,100.10,0,0,0\n2026-10-03,0.00,70.25,-70.25,0.00,0,0,0\n");
 });
 
 it('protects report page and exports from non managers', function (Role $role) {

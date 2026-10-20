@@ -43,7 +43,7 @@ it('imports a csv product with an audited opening stock and exports both formats
         ->and(StockMovement::where('inventory_item_id', $item->id)->where('quantity', 5)->count())->toBe(1);
     $this->get(route('inventory.export', ['format' => 'csv']))->assertOk()
         ->assertHeader('Content-Type', 'text/csv; charset=UTF-8')
-        ->assertStreamedContent("sku,name,category,brand,purchase_price,selling_price,opening_stock,minimum_stock,unit,supplier,storage_location,is_active\nOLI-01,\"Oli motor\",Pelumas,AJM,25000.00,35000.00,5,2,botol,,,1\n");
+        ->assertStreamedContent("\"Kode Barang\",\"Nama Barang\",Kategori,Merek,\"Harga Beli\",\"Harga Jual\",Stok,\"Stok Minimum\",Satuan,Pemasok,\"Lokasi Penyimpanan\",Aktif\nOLI-01,\"Oli motor\",Pelumas,AJM,25000.00,35000.00,5,2,botol,,,Ya\n");
     $xlsx = $this->get(route('inventory.export', ['format' => 'xlsx']))->assertOk()
         ->assertHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
         ->streamedContent();
@@ -57,6 +57,96 @@ it('imports a csv product with an audited opening stock and exports both formats
     } finally {
         unlink($path);
     }
+});
+
+it('exports readable Indonesian templates and product status in both formats', function (bool $template) {
+    InventoryItem::factory()->create(['sku' => 'AKTIF', 'is_active' => true]);
+    InventoryItem::factory()->create(['sku' => 'NONAKTIF', 'is_active' => false]);
+    $this->actingAs(User::factory()->create(['role' => 'admin']));
+    $headings = ['Kode Barang', 'Nama Barang', 'Kategori', 'Merek', 'Harga Beli', 'Harga Jual', 'Stok', 'Stok Minimum', 'Satuan', 'Pemasok', 'Lokasi Penyimpanan', 'Aktif'];
+    $csv = $this->get(route('inventory.export', ['format' => 'csv', 'template' => $template]))->assertOk()->streamedContent();
+    expect(str_getcsv(strtok($csv, "\n"), escape: ''))->toBe($headings);
+    $bytes = $this->get(route('inventory.export', ['format' => 'xlsx', 'template' => $template]))->assertOk()->streamedContent();
+    $path = tempnam(sys_get_temp_dir(), 'indonesian');
+    try {
+        file_put_contents($path, $bytes);
+        $book = IOFactory::load($path);
+        $sheet = $book->getActiveSheet();
+        expect($sheet->rangeToArray('A1:L1')[0])->toBe($headings)
+            ->and($sheet->getStyle('A1')->getFont()->getBold())->toBeTrue()
+            ->and($sheet->getColumnDimension('B')->getWidth())->toBeGreaterThan(20)
+            ->and($sheet->getCell('L2')->getDataValidation()->getFormula1())->toBe('"Ya,Tidak"');
+        if (! $template) {
+            expect($sheet->getCell('L2')->getValue())->toBe('Ya')
+                ->and($sheet->getCell('L3')->getValue())->toBe('Tidak');
+            $lines = explode("\n", trim($csv));
+            expect(str_getcsv($lines[1], escape: '')[11])->toBe('Ya')
+                ->and(str_getcsv($lines[2], escape: '')[11])->toBe('Tidak');
+        }
+        $book->disconnectWorksheets();
+    } finally {
+        unlink($path);
+    }
+})->with([true, false]);
+
+it('imports Indonesian columns and Ya Tidak status in CSV and XLSX', function (string $format) {
+    $this->actingAs(User::factory()->create(['role' => 'admin']));
+    $headings = ['Kode Barang', 'Nama Barang', 'Kategori', 'Merek', 'Harga Beli', 'Harga Jual', 'Stok', 'Stok Minimum', 'Satuan', 'Pemasok', 'Lokasi Penyimpanan', 'Aktif'];
+    $active = inventoryRow('BARU-A');
+    $active[11] = ' Ya ';
+    $inactive = inventoryRow('BARU-B', 0);
+    $inactive[11] = 'tidak';
+    $rows = [$headings, $active, $inactive];
+    $path = tempnam(sys_get_temp_dir(), 'localized');
+    $book = new Spreadsheet;
+    try {
+        if ($format === 'xlsx') {
+            $book->getActiveSheet()->fromArray($rows, null, 'A1', true);
+            (new Xlsx($book))->save($path);
+            $file = new UploadedFile($path, 'inventory.xlsx', null, null, true);
+        } else {
+            $file = inventoryCsv($rows);
+        }
+        $this->post(route('inventory.import'), ['file' => $file])->assertSessionHasNoErrors()->assertSessionHas('inventoryStatus');
+        expect(InventoryItem::where('sku', 'BARU-A')->sole()->is_active)->toBeTrue()
+            ->and(InventoryItem::where('sku', 'BARU-B')->sole()->is_active)->toBeFalse()
+            ->and(InventoryItem::where('sku', 'BARU-A')->sole()->current_stock)->toBe(5)
+            ->and(StockMovement::count())->toBe(1);
+    } finally {
+        $book->disconnectWorksheets();
+        unlink($path);
+    }
+})->with(['csv', 'xlsx']);
+
+it('imports a filled downloaded XLSX template without treating dropdown rows as products', function () {
+    $this->actingAs(User::factory()->create(['role' => 'admin']));
+    $bytes = $this->get(route('inventory.export', ['format' => 'xlsx', 'template' => 1]))->assertOk()->streamedContent();
+    $path = tempnam(sys_get_temp_dir(), 'template');
+    try {
+        file_put_contents($path, $bytes);
+        $book = IOFactory::load($path);
+        $row = inventoryRow('TEMPLATE-BARU', 0);
+        $row[11] = 'Tidak';
+        $book->getActiveSheet()->fromArray([$row], null, 'A2', true);
+        (new Xlsx($book))->save($path);
+        $book->disconnectWorksheets();
+        $this->post(route('inventory.import'), ['file' => new UploadedFile($path, 'template.xlsx', null, null, true)])
+            ->assertSessionHasNoErrors()->assertSessionHas('inventoryStatus');
+        expect(InventoryItem::sole()->sku)->toBe('TEMPLATE-BARU')
+            ->and(InventoryItem::sole()->current_stock)->toBe(0)
+            ->and(InventoryItem::sole()->is_active)->toBeFalse();
+    } finally {
+        unlink($path);
+    }
+});
+
+it('rejects unclear active status without importing any products', function () {
+    $row = inventoryRow();
+    $row[11] = 'Mungkin';
+    $response = $this->actingAs(User::factory()->create(['role' => 'admin']))
+        ->post(route('inventory.import'), ['file' => inventoryCsv([inventoryHeaders(), inventoryRow('GOOD'), $row])])->assertSessionHasErrors('file');
+    expect(implode(' ', $response->baseResponse->getSession()->get('errors')->get('file')))->toContain('Gunakan Ya atau Tidak.');
+    expect(InventoryItem::count())->toBe(0)->and(StockMovement::count())->toBe(0);
 });
 
 it('provides visible CSV and XLSX controls and a guarded import form', function () {

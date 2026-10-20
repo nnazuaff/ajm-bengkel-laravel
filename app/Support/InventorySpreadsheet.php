@@ -15,15 +15,19 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 use PhpOffice\PhpSpreadsheet\Cell\DataType;
+use PhpOffice\PhpSpreadsheet\Cell\DataValidation;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Reader\IReadFilter;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class InventorySpreadsheet
 {
     public const HEADERS = ['sku', 'name', 'category', 'brand', 'purchase_price', 'selling_price', 'opening_stock', 'minimum_stock', 'unit', 'supplier', 'storage_location', 'is_active'];
+
+    public const LABELS = ['Kode Barang', 'Nama Barang', 'Kategori', 'Merek', 'Harga Beli', 'Harga Jual', 'Stok', 'Stok Minimum', 'Satuan', 'Pemasok', 'Lokasi Penyimpanan', 'Aktif'];
 
     public const MAX_ROWS = 500;
 
@@ -124,7 +128,7 @@ class InventorySpreadsheet
                 throw ValidationException::withMessages(['file' => 'Berkas XLSX tidak dapat dibaca.']);
             }
         }
-        if (! isset($rows[0]) || $rows[0] !== self::HEADERS) {
+        if (! isset($rows[0]) || ! in_array($rows[0], [self::HEADERS, self::LABELS], true)) {
             throw ValidationException::withMessages(['file' => 'Kolom tidak sesuai template. Unduh template CSV atau XLSX terlebih dahulu.']);
         }
         array_shift($rows);
@@ -159,6 +163,11 @@ class InventorySpreadsheet
                 continue;
             }
             $data = array_combine(self::HEADERS, $row);
+            $data['is_active'] = match (mb_strtolower(trim($data['is_active']))) {
+                'ya', '1' => '1',
+                'tidak', '0' => '0',
+                default => $data['is_active'],
+            };
             $sku = trim($data['sku']);
             $key = mb_strtolower($sku);
             if ($sku !== '') {
@@ -189,7 +198,7 @@ class InventorySpreadsheet
                 'regex' => 'Format tidak valid.',
                 'integer' => 'Harus berupa bilangan bulat.',
                 'min.numeric' => 'Minimal :min.',
-                'boolean' => 'Gunakan 1 atau 0.',
+                'boolean' => 'Gunakan Ya atau Tidak.',
                 'exists' => 'Data tidak ditemukan.',
                 'prohibited' => 'Tidak boleh diisi.',
             ]);
@@ -248,10 +257,10 @@ class InventorySpreadsheet
         $headers = ['Content-Type' => $format === 'csv' ? 'text/csv; charset=UTF-8' : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'X-Content-Type-Options' => 'nosniff'];
 
         return response()->streamDownload(function () use ($format, $template): void {
-            $rows = [self::HEADERS];
+            $rows = [self::LABELS];
             if (! $template) {
                 foreach (InventoryItem::with('category')->lazyById(200) as $item) {
-                    $rows[] = [$item->sku, $item->name, $item->category_id === null ? '' : $item->category->name, $item->brand ?? '', $item->purchase_price, $item->selling_price, (string) $item->current_stock, (string) $item->minimum_stock, $item->unit, $item->supplier ?? '', $item->storage_location ?? '', $item->is_active ? '1' : '0'];
+                    $rows[] = [$item->sku, $item->name, $item->category_id === null ? '' : $item->category->name, $item->brand ?? '', $item->purchase_price, $item->selling_price, (string) $item->current_stock, (string) $item->minimum_stock, $item->unit, $item->supplier ?? '', $item->storage_location ?? '', $item->is_active ? 'Ya' : 'Tidak'];
                 }
             }
             if ($format === 'csv') {
@@ -275,6 +284,20 @@ class InventorySpreadsheet
                         $sheet->setCellValueExplicit([$column + 1, $index + 1], (string) $value, DataType::TYPE_STRING);
                     }
                 }
+                $sheet->getStyle('A1:L1')->applyFromArray([
+                    'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+                    'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '334155']],
+                ]);
+                $sheet->getRowDimension(1)->setRowHeight(28);
+                foreach (['A' => 22, 'B' => 32, 'C' => 22, 'D' => 20, 'E' => 18, 'F' => 18, 'G' => 14, 'H' => 18, 'I' => 16, 'J' => 24, 'K' => 28, 'L' => 14] as $column => $width) {
+                    $sheet->getColumnDimension($column)->setWidth($width);
+                }
+                $validation = $sheet->getCell('L2')->getDataValidation();
+                $validation->setType(DataValidation::TYPE_LIST)->setErrorStyle(DataValidation::STYLE_STOP)
+                    ->setAllowBlank(false)->setShowDropDown(true)->setShowErrorMessage(true)
+                    ->setErrorTitle('Status tidak valid')->setError('Pilih Ya atau Tidak.')
+                    ->setFormula1('"Ya,Tidak"')->setSqref('L2:L'.(self::MAX_ROWS + 1));
+                $sheet->getComment('G1')->getText()->createTextRun('Saat impor: stok awal produk baru. Saat ekspor: stok saat ini. Produk lama tidak diperbarui melalui impor.');
                 $sheet->freezePane('A2');
                 $sheet->setAutoFilter('A1:L'.count($rows));
                 (new Xlsx($book))->save('php://output');
