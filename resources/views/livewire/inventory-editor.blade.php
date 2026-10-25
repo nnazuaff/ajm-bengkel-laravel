@@ -15,7 +15,10 @@
                 <flux:input wire:model="form.unit" label="Satuan" maxlength="30" required />
                 <flux:input wire:model="form.supplier" label="Pemasok (opsional)" maxlength="120" />
                 <flux:input wire:model="form.storage_location" label="Lokasi penyimpanan (opsional)" maxlength="120" />
-                <flux:checkbox wire:model="form.is_active" label="Aktif untuk pemakaian dan penjualan" />
+                <flux:field class="!flex min-h-11 items-center gap-3 md:col-span-2" data-inventory-availability>
+                    <flux:switch id="inventory-active" wire:model="form.is_active" aria-labelledby="inventory-active-label" />
+                    <flux:label id="inventory-active-label" for="inventory-active" class="cursor-pointer">Aktif untuk pemakaian dan penjualan</flux:label>
+                </flux:field>
             </div>
             <div class="flex justify-end gap-3"><flux:button type="button" wire:click="closeForm">Batal</flux:button><flux:button type="submit" variant="primary" wire:loading.attr="disabled">Simpan barang</flux:button></div>
         </form>

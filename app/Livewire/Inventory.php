@@ -119,6 +119,28 @@ class Inventory extends Component
         session()->flash('inventoryStatus', 'Kategori berhasil dihapus.');
     }
 
+    public function setActive(int $id, bool $active): void
+    {
+        DB::transaction(function () use ($id, $active): void {
+            $item = InventoryItem::query()->lockForUpdate()->findOrFail($id);
+            $this->actor()->refresh();
+            $this->authorize('update', $item);
+            if ($item->is_active === $active) {
+                return;
+            }
+            $before = $item->is_active;
+            $item->is_active = $active;
+            if (! $item->save()) {
+                throw new \RuntimeException('Status barang gagal disimpan.');
+            }
+            $audit = AuditLog::create(['actor_id' => $this->actor()->id, 'action' => 'inventory.status_changed', 'entity_type' => InventoryItem::class, 'entity_id' => $item->id, 'context' => ['before' => $before, 'after' => $active]]);
+            if (! $audit->exists) {
+                throw new \RuntimeException('Audit gagal disimpan.');
+            }
+        }, attempts: 5);
+        session()->flash('inventoryStatus', $active ? 'Barang diaktifkan untuk pemakaian dan penjualan.' : 'Barang dinonaktifkan. Stok dan riwayat tetap tersimpan.');
+    }
+
     public function archive(int $id): void
     {
         $item = InventoryItem::query()->findOrFail($id);
