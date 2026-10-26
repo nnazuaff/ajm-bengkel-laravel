@@ -30,6 +30,12 @@ use App\Livewire\WorkshopSettings;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', PublicHomeController::class)->name('home');
+
+// Password recovery is paused; Fortify's reset feature remains disabled.
+Route::middleware('guest')->group(function () {
+    Route::view('forgot-password', 'pages::auth.forgot-password')->name('password.request');
+    Route::redirect('reset-password/{token}', '/forgot-password');
+});
 Route::livewire('booking/guest', GuestBooking::class)->name('booking.guest');
 Route::livewire('check-in', PublicCheckIn::class)->name('check-in');
 

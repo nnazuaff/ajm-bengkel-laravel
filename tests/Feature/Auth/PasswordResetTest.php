@@ -1,65 +1,39 @@
 <?php
 
 use App\Models\User;
-use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Password;
 use Laravel\Fortify\Features;
 
-beforeEach(function () {
-    $this->skipUnlessFortifyHas(Features::resetPasswords());
+test('forgot password shows a development notice instead of an email form', function () {
+    $this->get(route('password.request'))->assertOk()
+        ->assertSee('Fitur ini masih dalam pengembangan.')
+        ->assertSee('Kembali ke login')
+        ->assertDontSee('name="email"', false)
+        ->assertDontSee('email-password-reset-link-button');
+    $this->get(route('login'))->assertOk()->assertSee(route('password.request'), false);
+    expect(Features::enabled(Features::resetPasswords()))->toBeFalse();
 });
 
-test('reset password link screen can be rendered', function () {
-    $response = $this->get(route('password.request'));
-
-    $response->assertOk();
-});
-
-test('reset password link can be requested', function () {
+test('direct forgot password requests cannot send email or create reset tokens', function () {
     Notification::fake();
-
     $user = User::factory()->create();
-
-    $this->post(route('password.request'), ['email' => $user->email]);
-
-    Notification::assertSentTo($user, ResetPassword::class);
+    $this->post('/forgot-password', ['email' => $user->email])->assertStatus(405);
+    Notification::assertNothingSent();
+    $this->assertDatabaseCount('password_reset_tokens', 0);
 });
 
-test('reset password screen can be rendered', function () {
+test('old reset links redirect to the development notice and cannot change passwords', function () {
     Notification::fake();
-
     $user = User::factory()->create();
-
-    $this->post(route('password.request'), ['email' => $user->email]);
-
-    Notification::assertSentTo($user, ResetPassword::class, function ($notification) {
-        $response = $this->get(route('password.reset', $notification->token));
-
-        $response->assertOk();
-
-        return true;
-    });
-});
-
-test('password can be reset with valid token', function () {
-    Notification::fake();
-
-    $user = User::factory()->create();
-
-    $this->post(route('password.request'), ['email' => $user->email]);
-
-    Notification::assertSentTo($user, ResetPassword::class, function ($notification) use ($user) {
-        $response = $this->post(route('password.update'), [
-            'token' => $notification->token,
-            'email' => $user->email,
-            'password' => 'password',
-            'password_confirmation' => 'password',
-        ]);
-
-        $response
-            ->assertSessionHasNoErrors()
-            ->assertRedirect(route('login', absolute: false));
-
-        return true;
-    });
+    $hash = $user->password;
+    $token = Password::broker()->createToken($user);
+    $this->get('/reset-password/'.$token.'?email='.urlencode($user->email))
+        ->assertRedirect('/forgot-password');
+    $this->post('/reset-password', [
+        'token' => $token, 'email' => $user->email,
+        'password' => 'Changed-password-123!', 'password_confirmation' => 'Changed-password-123!',
+    ])->assertNotFound();
+    expect($user->fresh()->password)->toBe($hash);
+    Notification::assertNothingSent();
 });
