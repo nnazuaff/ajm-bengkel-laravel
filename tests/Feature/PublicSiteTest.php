@@ -2,6 +2,7 @@
 
 use App\Models\Customer;
 use App\Models\Receipt;
+use App\Models\User;
 use App\Models\Vehicle;
 use App\Models\WorkshopSetting;
 use Illuminate\Support\Facades\Storage;
@@ -14,6 +15,13 @@ it('serves a responsive public home using only configured workshop identity', fu
         ->assertSee(route('booking.guest'))->assertSee(route('login'))->assertSee(route('register'))
         ->assertSee('name="viewport"', false)->assertSee('ajm-hero', false)
         ->assertDontSee('08:00')->assertDontSee('Rp 50.000');
+});
+
+it('shows the developer credit only on the public homepage', function () {
+    $this->get('/')->assertOk()->assertSee('Developed by')
+        ->assertSee('href="https://github.com/nnazuaff"', false);
+    $this->actingAs(User::factory()->create(['role' => 'admin']))
+        ->get('/inventory')->assertOk()->assertDontSee('Developed by');
 });
 
 it('omits unset contacts and all private customer transaction data on the public page', function () {

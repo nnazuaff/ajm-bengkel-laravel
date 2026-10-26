@@ -139,6 +139,7 @@
     </main>
     <footer class="ajm-container ajm-footer">
         <span>{{ $workshop->name }}</span>
+        <span>Developed by <a href="https://github.com/nnazuaff" target="_blank" rel="noopener noreferrer">nnazuaff</a></span>
         <div><a href="{{ $bookingUrl }}">Booking servis</a>@guest @if (Route::has('register'))<a href="{{ route('register') }}">Daftar akun</a>@endif @endguest</div>
     </footer>
     @fluxScripts
