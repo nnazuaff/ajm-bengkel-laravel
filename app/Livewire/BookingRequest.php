@@ -7,6 +7,7 @@ use App\Models\Booking;
 use App\Models\Customer;
 use App\Models\User;
 use App\Models\Vehicle;
+use App\Support\BookingWhatsapp;
 use Illuminate\Contracts\View\View;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\Auth;
@@ -59,14 +60,15 @@ class BookingRequest extends Component
         $this->resetValidation();
     }
 
-    public function submit(): void
+    /** @return array{url: ?string, number: string}|null */
+    public function submit(): ?array
     {
         $this->authorize('request', Booking::class);
         /** @var User $actor */
         $actor = Auth::user();
         $this->resetValidation();
         try {
-            app(CreateBooking::class)->create($actor, $this->form);
+            $booking = app(CreateBooking::class)->create($actor, $this->form);
         } catch (ValidationException $exception) {
             foreach ($exception->errors() as $key => $messages) {
                 foreach ($messages as $message) {
@@ -74,10 +76,12 @@ class BookingRequest extends Component
                 }
             }
 
-            return;
+            return null;
         }
         $this->closeForm();
         $this->dispatch('booking-created');
+
+        return ['url' => BookingWhatsapp::url($booking), 'number' => $booking->booking_number];
     }
 
     public function closeForm(): void

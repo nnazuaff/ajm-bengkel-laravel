@@ -38,7 +38,7 @@
                     </div>
                     <div>
                         <dt class="text-zinc-500">Akun pengirim</dt>
-                        <dd class="mt-1">{{ $selectedBooking->submitter?->name ?? 'Petugas bengkel' }}</dd>
+                        <dd class="mt-1">{{ $selectedBooking->submitted_by === null ? 'Guest' : ($selectedBooking->submitter?->name ?? 'Akun tidak tersedia') }}</dd>
                     </div>
                 </dl>
                 <div class="rounded-lg bg-zinc-50 p-4 dark:bg-zinc-800">

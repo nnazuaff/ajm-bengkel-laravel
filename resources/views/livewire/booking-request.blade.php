@@ -1,7 +1,8 @@
 <div>
+    <x-booking-whatsapp>
     <flux:modal :closable="false" name="booking-request" wire:model="showForm" class="w-[calc(100%-2rem)] max-w-3xl max-h-[calc(100dvh-2rem)] overflow-y-auto" aria-labelledby="booking-form-heading">
         @if($showForm)
-            <form wire:submit="submit" class="space-y-5" aria-labelledby="booking-form-heading" x-init="$nextTick(() => $el.querySelector('input')?.focus())">
+            <form x-on:submit.prevent="send($wire)" class="space-y-5" aria-labelledby="booking-form-heading" x-init="$nextTick(() => $el.querySelector('input')?.focus())">
                 <flux:heading size="lg" level="2" id="booking-form-heading">Buat booking</flux:heading>
                 <p class="text-sm text-zinc-500">Kontak dan motor digunakan kembali tanpa mengubah catatan lama. Motor baru disimpan saat booking. Jam 08:00–17:00 WIB merupakan pilihan permintaan, bukan konfirmasi slot.</p>
                 <fieldset class="space-y-4">
@@ -37,9 +38,10 @@
                 <div class="flex flex-wrap items-center justify-end gap-3">
                     <span role="status" wire:loading wire:target="submit" class="text-sm text-zinc-500">Mengirim…</span>
                     <flux:button type="button" wire:click="closeForm">Batal</flux:button>
-                    <flux:button type="submit" variant="primary" wire:loading.attr="disabled" wire:target="submit">Ajukan booking</flux:button>
+                    <flux:button type="submit" variant="primary" wire:loading.attr="disabled" wire:target="submit" x-bind:disabled="busy"><flux:icon.arrow-path x-cloak x-show="busy" class="size-4 animate-spin" /><span x-text="busy ? 'Menyiapkan WhatsApp…' : 'Ajukan booking'">Ajukan booking</span></flux:button>
                 </div>
             </form>
         @endif
     </flux:modal>
+    </x-booking-whatsapp>
 </div>

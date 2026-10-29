@@ -1,9 +1,8 @@
 <section class="space-y-6">
-    <header><flux:heading size="xl" level="1">Booking tanpa akun</flux:heading><flux:text class="mt-2">Isi kontak kamu, data motor, dan jadwal kedatangan. Tulis gejala yang terasa dan kapan munculnya. Tunggu konfirmasi dari AJM sebelum datang.</flux:text></header>
-    @if ($submitted)
-        <div role="status" class="workshop-panel space-y-3"><h2 class="text-lg font-semibold">Booking berhasil diajukan</h2><p>Petugas akan menghubungi kamu lewat kontak yang kamu isi untuk mengonfirmasi jadwal. Saat kamu datang, petugas akan memeriksa data motor.</p><flux:button href="{{ route('home') }}" wire:navigate>Kembali ke beranda</flux:button></div>
-    @else
-        <form wire:submit="submit" class="workshop-panel space-y-6">
+    <x-booking-whatsapp guest>
+    @unless ($submitted)
+        <header class="mb-6"><flux:heading size="xl" level="1">Booking tanpa akun</flux:heading><flux:text class="mt-2">Isi kontak kamu, data motor, dan jadwal kedatangan. Tulis gejala yang terasa dan kapan munculnya. Tunggu konfirmasi dari AJM sebelum datang.</flux:text></header>
+        <form x-on:submit.prevent="send($wire)" class="workshop-panel space-y-6">
             <x-validation-summary :inline="['form.name', 'form.phone', 'form.email', 'form.license_plate', 'form.brand', 'form.model', 'form.year', 'form.current_mileage', 'form.booking_date', 'form.arrival_time', 'form.service_type', 'form.complaint', 'form.notes']" />
             <fieldset class="space-y-4"><legend class="mb-3 font-semibold">Kontak</legend><div class="grid gap-4 sm:grid-cols-2">
                 <flux:input wire:model="form.name" label="Nama" required maxlength="120" autocomplete="name" />
@@ -24,8 +23,9 @@
                 <div class="sm:col-span-2"><flux:textarea wire:model="form.complaint" label="Keluhan" rows="3" maxlength="5000" required /></div>
                 <div class="sm:col-span-2"><flux:textarea wire:model="form.notes" label="Catatan tambahan (opsional)" rows="2" maxlength="5000" /></div>
             </div></fieldset>
-            <div class="flex flex-wrap items-center justify-end gap-3"><span wire:loading wire:target="submit" role="status">Mengirim…</span><flux:button type="submit" variant="primary" wire:loading.attr="disabled">Ajukan booking</flux:button></div>
+            <div class="flex flex-wrap items-center justify-end gap-3"><span wire:loading wire:target="submit" role="status">Mengirim…</span><flux:button type="submit" variant="primary" wire:loading.attr="disabled" x-bind:disabled="busy"><flux:icon.arrow-path x-cloak x-show="busy" class="size-4 animate-spin" /><span x-text="busy ? 'Menyiapkan WhatsApp…' : 'Ajukan booking'">Ajukan booking</span></flux:button></div>
         </form>
         <p class="text-sm text-zinc-600 dark:text-zinc-400">Punya akun? <a href="{{ route('booking.mine') }}" class="underline" wire:navigate>Booking dengan kendaraan tersimpan</a>. Untuk melihat riwayat servis lama, petugas perlu memverifikasi identitas kamu dan kepemilikan motor.</p>
-    @endif
+    @endunless
+    </x-booking-whatsapp>
 </section>

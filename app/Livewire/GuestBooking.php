@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Actions\CreateBooking;
+use App\Support\BookingWhatsapp;
 use Illuminate\Contracts\View\View;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Layout;
@@ -29,14 +30,15 @@ class GuestBooking extends Component
         $this->form['booking_date'] = now()->toDateString();
     }
 
-    public function submit(): void
+    /** @return array{url: ?string, number: string}|null */
+    public function submit(): ?array
     {
         if ($this->submitted) {
-            return;
+            return null;
         }
         $this->resetValidation();
         try {
-            app(CreateBooking::class)->guest($this->form);
+            $booking = app(CreateBooking::class)->guest($this->form);
         } catch (ValidationException $exception) {
             foreach ($exception->errors() as $key => $messages) {
                 foreach ($messages as $message) {
@@ -44,10 +46,12 @@ class GuestBooking extends Component
                 }
             }
 
-            return;
+            return null;
         }
         $this->reset('form');
         $this->submitted = true;
+
+        return ['url' => BookingWhatsapp::url($booking), 'number' => $booking->booking_number];
     }
 
     public function render(): View
